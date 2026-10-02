@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Nakhon Phanom Tourism DSS Dashboard</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;600&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Prompt', sans-serif; background-color: #f3f4f6; }
+    </style>
+</head>
+<body class="p-6">
+    <div class="max-w-7xl mx-auto space-y-6">
+        <!-- Header -->
+        <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+            <div>
+                <h1 class="text-2xl font-bold text-blue-900">Nakhon Phanom Tourism Dashboard</h1>
+                <p class="text-gray-500 text-sm">ระบบสนับสนุนการตัดสินใจ (DSS) วิเคราะห์สถิติและรายได้ชุมชน</p>
+            </div>
+            <!-- OLAP Filters (Slice & Dice) -->
+            <div class="flex flex-wrap gap-4">
+                <div>
+                    <label class="block text-xs text-gray-500 mb-1">เทศกาล (Slice)</label>
+                    <select id="filterFestival" class="border rounded p-2 text-sm bg-gray-50 outline-none">
+                        <option value="all">ทั้งหมด (All)</option>
+                        <option value="true">ช่วงเทศกาล (Festival)</option>
+                        <option value="false">ช่วงปกติ (Normal)</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-xs text-gray-500 mb-1">กลุ่มนักท่องเที่ยว (Dice)</label>
+                    <select id="filterStyle" class="border rounded p-2 text-sm bg-gray-50 outline-none">
+                        <option value="all">ทั้งหมด (All)</option>
+                        <option value="ลุยเดี่ยว">ลุยเดี่ยว (Solo)</option>
+                        <option value="กลุ่มเพื่อน">กลุ่มเพื่อน (Friends)</option>
+                        <option value="ครอบครัว">ครอบครัว (Family)</option>
+                    </select>
+                </div>
+                <!-- New Filter: Satisfaction Score -->
+                <div>
+                    <label class="block text-xs text-blue-600 font-semibold mb-1">กรองรีวิว (คะแนนดาว)</label>
+                    <select id="filterScore" class="border border-blue-200 rounded p-2 text-sm bg-blue-50 outline-none">
+                        <option value="all">ทุกระดับคะแนน</option>
+                        <option value="high">4.0 - 5.0 (พอใจมาก)</option>
+                        <option value="med">3.0 - 3.9 (ปานกลาง)</option>
+                        <option value="low">ต่ำกว่า 3.0 (ต้องปรับปรุง)</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+
+        <!-- KPIs Cards -->
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
+            <div class="bg-white p-6 rounded-xl shadow-sm border-l-4 border-blue-500">
+                <p class="text-gray-500 text-sm">รายได้ชุมชนรวม</p>
+                <h2 class="text-3xl font-bold text-gray-800" id="kpiRevenue">0 ฿</h2>
+            </div>
+            <div class="bg-white p-6 rounded-xl shadow-sm border-l-4 border-green-500">
+                <p class="text-gray-500 text-sm">จำนวนนักท่องเที่ยว</p>
+                <h2 class="text-3xl font-bold text-gray-800" id="kpiVisitors">0 คน</h2>
+            </div>
+            <div class="bg-white p-6 rounded-xl shadow-sm border-l-4 border-purple-500">
+                <p class="text-gray-500 text-sm">รายได้เฉลี่ยต่อหัว</p>
+                <h2 class="text-3xl font-bold text-gray-800" id="kpiArpu">0 ฿</h2>
+            </div>
+            <div class="bg-white p-6 rounded-xl shadow-sm border-l-4 border-yellow-500">
+                <p class="text-gray-500 text-sm">ความพึงพอใจเฉลี่ย</p>
+                <h2 class="text-3xl font-bold text-gray-800" id="kpiSatisfaction">0.0 / 5</h2>
+            </div>
+        </div>
+
+        <!-- Charts Section -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <!-- Chart: Visitor Trend -->
+            <div class="col-span-1 md:col-span-2 bg-white p-6 rounded-xl shadow-sm">
+                <h3 class="text-lg font-bold mb-4 text-gray-700">แนวโน้มจำนวนนักท่องเที่ยวแบ่งตามเดือน (Monthly Visitor Trend)</h3>
+                <canvas id="visitorChart" height="80"></canvas>
+            </div>
+
+            <!-- OLAP: Drill-down view -->
+            <div class="bg-white p-6 rounded-xl shadow-sm">
+                <h3 class="text-lg font-bold mb-4 text-gray-700">รายได้ชุมชนแยกตามสถานที่ (Revenue by Location)</h3>
+                <canvas id="revenueChart" height="200"></canvas>
+            </div>
+            
+            <!-- Data Mining: Clustering -->
+            <div class="bg-white p-6 rounded-xl shadow-sm">
+                <h3 class="text-lg font-bold mb-1 text-gray-700">Data Mining: Customer Segmentation</h3>
+                <p class="text-xs text-gray-500 mb-4">ค้นหากลุ่มนักท่องเที่ยวที่สร้างรายได้สูงแต่ความพึงพอใจต่ำ</p>
+                <canvas id="clusterChart" height="200"></canvas>
+            </div>
+        </div>
+
+        <!-- New Section: Top 5 Reviews -->
+        <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
+            <h3 class="text-lg font-bold text-gray-700 mb-1">เสียงสะท้อนจากนักท่องเที่ยว (Reviews)</h3>
+            <p class="text-xs text-gray-500 mb-4">แสดงรีวิว 5 รายการล่าสุด (สามารถกรองช่วงคะแนนได้ที่แถบด้านบน)</p>
+            <div id="reviewContainer" class="space-y-3">
+                <!-- Reviews will be injected here by JavaScript -->
+            </div>
+        </div>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+</html>
