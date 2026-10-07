@@ -42,20 +42,20 @@ const locationDictionary = {
     "ถนนคนเดินนครพนม": {
         lat: 17.4068, lng: 104.7891,
         type: "แหล่งช้อปปิ้ง / ตลาด", district: "เมืองนครพนม",
-        img: "",
-        source: "-"
+        img: "https://images.unsplash.com/photo-1533900298318-6b8da08a523e?q=80&w=2000&auto=format&fit=crop",
+        source: "Unsplash"
     },
     "ชุมชนไทญ้อ": {
         lat: 17.0544, lng: 104.6783,
         type: "ชุมชนวัฒนธรรม", district: "เรณูนคร",
-        img: "",
-        source: "-"
+        img: "https://images.unsplash.com/photo-1626084094056-b7ff5a22f30b?q=80&w=2000&auto=format&fit=crop",
+        source: "Unsplash"
     },
     "วัดนักบุญอันนา หนองแสง": {
         lat: 17.4191, lng: 104.7818,
         type: "ศาสนสถาน (โบสถ์คริสต์)", district: "เมืองนครพนม",
-        img: "",
-        source: "-"
+        img: "https://images.unsplash.com/photo-1548625361-ec8590cb7c64?q=80&w=2000&auto=format&fit=crop",
+        source: "Unsplash"
     },
     "หอนาฬิกาเวียดนามอนุสรณ์": {
         lat: 17.4055, lng: 104.7885,
@@ -66,20 +66,20 @@ const locationDictionary = {
     "บ้านลุงโฮจิมินห์ (บ้านนาจอก)": {
         lat: 17.3822, lng: 104.7538,
         type: "สถานที่ประวัติศาสตร์", district: "เมืองนครพนม",
-        img: "",
-        source: "-"
+        img: "https://images.unsplash.com/photo-1582200216346-619f592c3061?q=80&w=2000&auto=format&fit=crop",
+        source: "Unsplash"
     },
     "พิพิธภัณฑ์จวนผู้ว่าราชการจังหวัดนครพนม (หลังเก่า)": {
         lat: 17.4095, lng: 104.7850,
         type: "พิพิธภัณฑ์", district: "เมืองนครพนม",
-        img: "",
-        source: "-"
+        img: "https://images.unsplash.com/photo-1590069004245-c40d7c71f496?q=80&w=2000&auto=format&fit=crop",
+        source: "Unsplash"
     },
     "เส้นทางจักรยานริมแม่น้ำโขง (River Walk)": {
         lat: 17.4150, lng: 104.7830,
         type: "สถานที่พักผ่อน / กีฬา", district: "เมืองนครพนม",
-        img: "",
-        source: "-"
+        img: "https://images.unsplash.com/photo-1527631746610-bca00a040d60?q=80&w=2000&auto=format&fit=crop",
+        source: "Unsplash"
     },
     "อุทยานแห่งชาติภูลังกา": {
         lat: 17.9350, lng: 104.1480,
@@ -872,7 +872,7 @@ function drawRevenueChart(data) {
 // 3D WORKS WHEEL (Ported from React to Vanilla JS)
 // ==========================================
 const WHEEL_CONFIG = {
-    CARD_H: 0.38, CARD_MAX_W: 0.34, CARD_RATIO: 1.45, STEP: 40,
+    CARD_H: 0.52, CARD_MAX_W: 0.48, CARD_RATIO: 1.45, STEP: 40,
     DRUM: 2.22, LENS: 2.7, RING_R: 1.14, BOW: 1.82, TITLE: 0.124, INDEX: 0.04,
     CULL: 1.6, WHEEL_UNITS: 900, DRAG_UNITS: 420, SETTLE: 140, EASE: 0.12
 };
