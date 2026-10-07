@@ -30,14 +30,14 @@ const locationDictionary = {
     "ลานพญาศรีสัตตนาคราช": {
         lat: 17.3995, lng: 104.7937,
         type: "แลนด์มาร์ก / จุดเช็คอิน", district: "เมืองนครพนม",
-        img: "https://upload.wikimedia.org/wikipedia/commons/f/f7/Phaya_Si_Sattanakharat.jpg",
-        source: "Wikimedia Commons"
+        img: "https://images.unsplash.com/photo-1629850239066-512c019da8bf?q=80&w=2000&auto=format&fit=crop",
+        source: "Unsplash"
     },
     "วัดพระธาตุพนมวรมหาวิหาร": {
         lat: 16.9416, lng: 104.7231,
         type: "ศาสนสถานสำคัญ", district: "ธาตุพนม",
-        img: "https://upload.wikimedia.org/wikipedia/commons/c/cd/Wat_Phra_That_Phanom2.jpg",
-        source: "Wikimedia Commons"
+        img: "https://images.unsplash.com/photo-1570119616035-7fb5b06869cb?q=80&w=2000&auto=format&fit=crop",
+        source: "Unsplash"
     },
     "ถนนคนเดินนครพนม": {
         lat: 17.4068, lng: 104.7891,
@@ -60,8 +60,8 @@ const locationDictionary = {
     "หอนาฬิกาเวียดนามอนุสรณ์": {
         lat: 17.4055, lng: 104.7885,
         type: "แลนด์มาร์กประวัติศาสตร์", district: "เมืองนครพนม",
-        img: "https://upload.wikimedia.org/wikipedia/commons/1/10/Nakhon_Phanom_Clock_Tower.jpg",
-        source: "Wikimedia Commons"
+        img: "https://images.unsplash.com/photo-1552763327-0fb53bbceeb5?q=80&w=2000&auto=format&fit=crop",
+        source: "Unsplash"
     },
     "บ้านลุงโฮจิมินห์ (บ้านนาจอก)": {
         lat: 17.3822, lng: 104.7538,
@@ -84,14 +84,14 @@ const locationDictionary = {
     "อุทยานแห่งชาติภูลังกา": {
         lat: 17.9350, lng: 104.1480,
         type: "อุทยานแห่งชาติ", district: "บ้านแพง",
-        img: "https://upload.wikimedia.org/wikipedia/commons/9/9f/%E0%B8%AD%E0%B8%B8%E0%B8%97%E0%B8%A2%E0%B8%B2%E0%B8%99%E0%B9%81%E0%B8%AB%E0%B9%88%E0%B8%87%E0%B8%8A%E0%B8%B2%E0%B8%95%E0%B8%B4%E0%B8%A0%E0%B8%B9%E0%B8%A5%E0%B8%B1%E0%B8%87%E0%B8%81%E0%B8%B2-%E0%B8%99%E0%B8%84%E0%B8%A3%E0%B8%9E%E0%B8%99%E0%B8%A1-2-600x360.jpg",
-        source: "Wikimedia Commons"
+        img: "https://images.unsplash.com/photo-1518182170546-076616fd46fa?q=80&w=2000&auto=format&fit=crop",
+        source: "Unsplash"
     },
     "วัดพระธาตุเรณู": {
         lat: 17.0544, lng: 104.6783,
         type: "ศาสนสถานสำคัญ", district: "เรณูนคร",
-        img: "https://upload.wikimedia.org/wikipedia/commons/5/52/Phra_That_Renu_Nakhon.jpg",
-        source: "Wikimedia Commons"
+        img: "https://images.unsplash.com/photo-1605335968412-f47ec05a0d33?q=80&w=2000&auto=format&fit=crop",
+        source: "Unsplash"
     }
 };
 
@@ -990,7 +990,6 @@ function calcWheelMetrics() {
     const indexEl = document.getElementById('works-index');
     
     if(labelEl) labelEl.style.fontSize = `${wheelMetrics.title}px`;
-    if(titleEl) titleEl.style.fontSize = `${Math.max(18, wheelMetrics.title * 0.75)}px`;
     if(indexEl) indexEl.style.fontSize = `${Math.max(12, wheelMetrics.index)}px`;
 
     wheelCards.forEach(card => {
