@@ -8,29 +8,30 @@ let tourismMap = null;
 let mapMarkersGroup = null;
 
 // Location Meta Data (Virtual Dimension Table for Map)
+// Changed to direct Original URLs for better hotlinking stability
 const locationDictionary = {
     "ลานพญาศรีสัตตนาคราช": {
         lat: 17.3995, lng: 104.7937,
         type: "แลนด์มาร์ก / จุดเช็คอิน", district: "เมืองนครพนม",
-        img: "https://upload.wikimedia.org/wikipedia/commons/thumb/f/f7/Phaya_Si_Sattanakharat.jpg/800px-Phaya_Si_Sattanakharat.jpg",
+        img: "https://upload.wikimedia.org/wikipedia/commons/f/f7/Phaya_Si_Sattanakharat.jpg",
         source: "Wikimedia Commons"
     },
     "วัดพระธาตุพนม": {
         lat: 16.9416, lng: 104.7231,
         type: "ศาสนสถานสำคัญ", district: "ธาตุพนม",
-        img: "https://upload.wikimedia.org/wikipedia/commons/thumb/c/cd/Wat_Phra_That_Phanom2.jpg/800px-Wat_Phra_That_Phanom2.jpg",
+        img: "https://upload.wikimedia.org/wikipedia/commons/c/cd/Wat_Phra_That_Phanom2.jpg",
         source: "Wikimedia Commons"
     },
     "ถนนคนเดินนครพนม": {
         lat: 17.4068, lng: 104.7891,
         type: "แหล่งช้อปปิ้ง / ตลาด", district: "เมืองนครพนม",
-        img: "https://upload.wikimedia.org/wikipedia/commons/thumb/1/10/Nakhon_Phanom_Clock_Tower.jpg/800px-Nakhon_Phanom_Clock_Tower.jpg",
+        img: "https://upload.wikimedia.org/wikipedia/commons/1/10/Nakhon_Phanom_Clock_Tower.jpg",
         source: "Wikimedia Commons"
     },
     "ชุมชนไทญ้อ": {
         lat: 17.0544, lng: 104.6783,
         type: "ชุมชนวัฒนธรรม", district: "เรณูนคร",
-        img: "https://upload.wikimedia.org/wikipedia/commons/thumb/5/52/Phra_That_Renu_Nakhon.jpg/800px-Phra_That_Renu_Nakhon.jpg",
+        img: "https://upload.wikimedia.org/wikipedia/commons/5/52/Phra_That_Renu_Nakhon.jpg",
         source: "Wikimedia Commons"
     }
 };
@@ -59,7 +60,7 @@ function switchTab(tabName) {
     activeBtn.classList.remove('text-blue-200');
     activeBtn.classList.add('border-b-2', 'border-white', 'pb-1');
 
-    // Fix map rendering bug when switching tabs back to map
+    // Fix map rendering bug when switching tabs
     if (tabName === 'dashboard' && tourismMap) {
         setTimeout(() => tourismMap.invalidateSize(), 100);
     }
@@ -97,12 +98,10 @@ document.getElementById('filterStyle').addEventListener('change', updateDashboar
 document.getElementById('filterScore').addEventListener('change', updateDashboard);
 
 function updateDashboard() {
-    // 1. Get filter values (SINGLE SOURCE OF TRUTH)
     const festivalFilter = document.getElementById('filterFestival').value;
     const styleFilter = document.getElementById('filterStyle').value;
     const scoreFilter = document.getElementById('filterScore').value;
 
-    // 2. Filter data (This affects Charts, KPI, and Map simultaneously)
     let filteredData = rawData.filter(row => {
         let passFestival = festivalFilter === 'all' ? true : row.isFestival.toString() === festivalFilter;
         let passStyle = styleFilter === 'all' ? true : row.travelStyle === styleFilter;
@@ -115,25 +114,21 @@ function updateDashboard() {
         return passFestival && passStyle && passScore;
     });
 
-    // 3. Update Existing Components
     updateKPIs(filteredData);
     drawVisitorChart(filteredData);
     drawRevenueChart(filteredData);
     drawClusterChart(filteredData);
     renderReviews(filteredData);
-    
-    // 4. Update Map based on same filtered data
     updateMap(filteredData);
 }
 
 // ==========================================
-// MAP UPDATE LOGIC (PHASE 1 ENHANCED)
+// MAP UPDATE LOGIC 
 // ==========================================
 function updateMap(data) {
     if (!mapMarkersGroup) return;
     mapMarkersGroup.clearLayers();
 
-    // Data Aggregation: sum visitors per location
     const locationStats = {};
     let totalMapVisitors = 0;
 
@@ -145,7 +140,6 @@ function updateMap(data) {
 
     const activeLocationsCount = Object.keys(locationStats).length;
 
-    // Find Top Location
     let topLocationName = "-";
     let maxVisitors = -1;
     for (const [loc, vis] of Object.entries(locationStats)) {
@@ -155,7 +149,6 @@ function updateMap(data) {
         }
     }
 
-    // Update Map Summary Header
     const summaryEl = document.getElementById('mapSummary');
     if (activeLocationsCount > 0) {
         summaryEl.innerHTML = `
@@ -167,40 +160,54 @@ function updateMap(data) {
         summaryEl.innerHTML = `<span class="text-red-500">ไม่พบข้อมูลจาก Filter นี้</span>`;
     }
 
-    // Draw Markers
     Object.keys(locationStats).forEach(locName => {
         const meta = locationDictionary[locName];
         if (meta) {
             const visitorCount = locationStats[locName];
             const marker = L.marker([meta.lat, meta.lng]);
             
-            // Popup HTML Design (Strictly following user requirements)
+            // ใช้ Inline CSS เพื่อแก้ปัญหา Tailwind ทับซ้อน และบังคับขนาด Layout ให้พอดีและสวยงาม
             const popupContent = `
-                <div class="w-48 font-sans">
-                    <h4 class="font-bold text-[15px] text-gray-800 leading-tight mb-1">${locName}</h4>
-                    <div class="text-[12px] text-gray-600 mb-2 leading-snug space-y-0.5">
-                        <p>📍 อำเภอ${meta.district}</p>
-                        <p>🏛️ ${meta.type}</p>
-                        <p class="font-semibold text-blue-700 mt-1 bg-blue-50 px-1 py-0.5 rounded">
+                <div style="width: 240px; font-family: 'Prompt', sans-serif;">
+                    <!-- รูปภาพด้านบน -->
+                    <img src="${meta.img}" 
+                         style="width: 100%; height: 140px; object-fit: cover; border-radius: 6px 6px 0 0; margin-bottom: 8px;" 
+                         alt="${locName}"
+                         onerror="this.src='https://images.unsplash.com/photo-1540454378618-fdb1fc442b58?auto=format&fit=crop&w=300&q=80'">
+                    
+                    <div style="padding: 0 4px;">
+                        <!-- ชื่อสถานที่ -->
+                        <h4 style="font-weight: bold; font-size: 16px; color: #1e3a8a; margin: 0 0 6px 0; line-height: 1.2;">${locName}</h4>
+                        
+                        <!-- ข้อมูลอำเภอและประเภท -->
+                        <p style="font-size: 13px; color: #4b5563; margin: 0 0 4px 0;">📍 อำเภอ${meta.district}</p>
+                        <p style="font-size: 13px; color: #4b5563; margin: 0 0 8px 0;">🏛️ ${meta.type}</p>
+                        
+                        <!-- ยอดนักท่องเที่ยว -->
+                        <div style="background-color: #eff6ff; color: #1d4ed8; font-weight: 600; font-size: 13px; padding: 6px; border-radius: 4px; text-align: center; margin-bottom: 10px; border: 1px solid #bfdbfe;">
                             👥 นักท่องเที่ยว: ${visitorCount.toLocaleString()} คน
-                        </p>
+                        </div>
+                        
+                        <!-- ปุ่มกด -->
+                        <button style="width: 100%; background-color: #2563eb; color: white; border: none; padding: 8px; border-radius: 4px; font-size: 13px; font-weight: bold; cursor: pointer; transition: background-color 0.2s;"
+                                onmouseover="this.style.backgroundColor='#1d4ed8'"
+                                onmouseout="this.style.backgroundColor='#2563eb'"
+                                onclick="alert('ดูรายละเอียดของ: ${locName} (เตรียมพัฒนาใน Phase ถัดไป)')">
+                            ดูรายละเอียด
+                        </button>
                     </div>
-                    <img src="${meta.img}" class="w-full h-24 object-cover rounded mb-2 border border-gray-200" alt="${locName}">
-                    <button class="w-full bg-blue-600 hover:bg-blue-700 text-white text-[12px] py-1.5 rounded shadow-sm transition-colors" 
-                            onclick="alert('ดูรายละเอียดของ: ${locName} (เตรียมพัฒนาใน Phase ถัดไป)')">
-                        ดูรายละเอียด
-                    </button>
                 </div>
             `;
             
-            marker.bindPopup(popupContent);
+            // บังคับขนาดขั้นต่ำให้ Leaflet ไม่บีบกล่อง
+            marker.bindPopup(popupContent, { minWidth: 250, maxWidth: 260 });
             mapMarkersGroup.addLayer(marker);
         }
     });
 }
 
 // ==========================================
-// EXISTING CHART & KPI LOGIC (UNTOUCHED)
+// EXISTING CHART & KPI LOGIC
 // ==========================================
 
 function updateKPIs(data) {
