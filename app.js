@@ -7,22 +7,22 @@ let dssScatterChartInstance = null;
 let tourismMap = null;
 let mapMarkersGroup = null;
 
-// Design System Colors (Naga Underwater Theme)
+// Design System Colors (Sunset Glassmorphism Theme)
 const colors = {
-    bg: '#061A2B',            // Deep Ocean
-    surface: '#0D2638',       // Surface
-    surfaceLight: '#12384A',  // Surface Light
-    primary: '#0B6E7A',       // Water
-    teal: '#159A9C',          // Teal
-    aqua: '#6ED6D1',          // Soft Aqua
-    gold: '#D6B25E',          // Naga Gold
-    warmGold: '#E8C66A',      // Warm Gold
-    text: '#F5F7FA',          // Text
-    muted: '#A9BBC5',         // Muted Text
-    border: 'rgba(255, 255, 255, 0.10)', // Border
-    success: '#4FB286',
-    warning: '#E8B65A',
-    danger: '#D96C6C'
+    bg: '#0F172A',
+    surface: 'rgba(15, 23, 42, 0.75)',
+    surfaceLight: 'rgba(30, 41, 59, 0.75)',
+    primary: '#60A5FA',       // Sky Blue
+    sunset: '#F97316',        // Sunset Orange
+    twilight: '#C084FC',      // Twilight Purple
+    gold: '#F59E0B',          // Naga Gold
+    warmGold: '#FDE047',      // Sun Yellow
+    text: '#F8FAFC',          // Text
+    muted: '#94A3B8',         // Muted Text
+    border: 'rgba(255, 255, 255, 0.15)', // Border
+    success: '#34D399',
+    warning: '#FBBF24',
+    danger: '#F87171'
 };
 
 // 11 Locations Dictionary (Unchanged Logic)
@@ -114,14 +114,14 @@ function switchTab(tabName) {
     const navIds = ['nav-dashboard', 'nav-attractions', 'nav-datamining'];
     navIds.forEach(id => {
         const btn = document.getElementById(id);
-        btn.classList.remove('border-b-2', 'border-brand-gold', 'text-brand-gold', 'bg-brand-surface');
+        btn.classList.remove('border-b-2', 'border-brand-orange', 'text-brand-yellow', 'bg-brand-surface');
         btn.classList.add('border-transparent', 'text-brand-muted', 'bg-transparent');
     });
 
     document.getElementById('view-' + tabName).classList.remove('hidden');
     const activeBtn = document.getElementById('nav-' + tabName);
     activeBtn.classList.remove('border-transparent', 'text-brand-muted', 'bg-transparent');
-    activeBtn.classList.add('border-b-2', 'border-brand-gold', 'text-brand-gold', 'bg-brand-surface');
+    activeBtn.classList.add('border-b-2', 'border-brand-orange', 'text-brand-yellow', 'bg-brand-surface');
 
     if (tabName === 'dashboard' && tourismMap) {
         setTimeout(() => tourismMap.invalidateSize(), 100);
@@ -240,7 +240,7 @@ function calculatePredictiveAI(data) {
     if (years.length < 2) {
         el.innerHTML = `
             <div class="text-brand-muted opacity-80 text-sm">
-                <p>⚠️ ต้องการข้อมูลย้อนหลังอย่างน้อย 2 ปีเพื่อพยากรณ์แนวโน้ม กรุณาเลือกตัวกรอง <strong>"ทุกปี"</strong></p>
+                <p>⚠️ ต้องการข้อมูลย้อนหลัง 2 ปีขึ้นไป กรุณาเลือก <strong>"ทุกปี"</strong></p>
             </div>
         `;
         return;
@@ -274,7 +274,7 @@ function calculatePredictiveAI(data) {
     } else if (m < 0 && growthPercent < -1) {
         arrow = "↓"; trendColor = "text-brand-danger"; bgLight = "bg-brand-danger/10 border-brand-danger/30"; trendText = "แนวโน้มหดตัว";
     } else {
-        arrow = "→"; trendColor = "text-brand-aqua"; bgLight = "bg-brand-aqua/10 border-brand-aqua/30"; trendText = "แนวโน้มคงที่";
+        arrow = "→"; trendColor = "text-brand-primary"; bgLight = "bg-brand-primary/10 border-brand-primary/30"; trendText = "แนวโน้มคงที่";
     }
 
     el.innerHTML = `
@@ -316,11 +316,11 @@ function generateDashboardInsight(data, locationStats) {
         if (arpu > maxArpu) { maxArpu = arpu; topCluster = c; }
     }
 
-    insightTextEl.innerHTML = `จากการวิเคราะห์ภายใต้ตัวกรองปัจจุบัน พบว่า <strong class="text-brand-gold">กลุ่ม ${topCluster}</strong> เป็นกลุ่มเป้าหมายที่มีรายได้เฉลี่ยต่อคนสูงสุด และ <strong class="text-brand-aqua">${topLoc}</strong> เป็นพื้นที่ที่มีการกระจุกตัวของนักท่องเที่ยวหนาแน่นที่สุดในแม่น้ำโขงเขตนี้`;
+    insightTextEl.innerHTML = `จากการวิเคราะห์ภายใต้ตัวกรองปัจจุบัน พบว่า <strong class="text-brand-yellow">กลุ่ม ${topCluster}</strong> เป็นกลุ่มที่มีกำลังซื้อสูงสุด และ <strong class="text-brand-orange">${topLoc}</strong> เป็นพื้นที่ที่มีการกระจุกตัวของนักท่องเที่ยวหนาแน่นที่สุด`;
 }
 
 // ==========================================
-// MAP & ATTRACTIONS LOGIC (Dark Theme styling)
+// MAP & ATTRACTIONS LOGIC
 // ==========================================
 function updateMap(locationStats, totalMapVisitors) {
     if (!mapMarkersGroup) return;
@@ -331,7 +331,7 @@ function updateMap(locationStats, totalMapVisitors) {
 
     const summaryEl = document.getElementById('mapSummary');
     if (activeLocationsCount > 0) {
-        summaryEl.innerHTML = `สถานที่: <span class="text-brand-aqua">${activeLocationsCount}</span> แห่ง | ผู้เข้าชม: <span class="text-brand-aqua">${totalMapVisitors.toLocaleString()}</span> คน`;
+        summaryEl.innerHTML = `สถานที่: <span class="text-brand-orange">${activeLocationsCount}</span> แห่ง | ผู้เข้าชม: <span class="text-brand-orange">${totalMapVisitors.toLocaleString()}</span> คน`;
     } else {
         summaryEl.innerHTML = `<span class="text-brand-danger">ไม่มีข้อมูล</span>`;
     }
@@ -342,10 +342,10 @@ function updateMap(locationStats, totalMapVisitors) {
             const stat = locationStats[locName];
             const avgSat = stat.count > 0 ? (stat.sumSat / stat.count).toFixed(1) : "0.0";
             
-            // Adjust marker to a dark elegant circle style
+            // Sunset Orange glowing marker
             const markerIcon = L.divIcon({
                 className: 'custom-div-icon',
-                html: `<div style="background-color: ${colors.gold}; width: 14px; height: 14px; border-radius: 50%; border: 2px solid #061A2B; box-shadow: 0 0 8px ${colors.gold};"></div>`,
+                html: `<div style="background-color: ${colors.sunset}; width: 14px; height: 14px; border-radius: 50%; border: 2px solid ${colors.bg}; box-shadow: 0 0 10px ${colors.sunset};"></div>`,
                 iconSize: [14, 14],
                 iconAnchor: [7, 7]
             });
@@ -355,34 +355,34 @@ function updateMap(locationStats, totalMapVisitors) {
             
             const imgHtml = meta.img 
                 ? `<div style="height: 110px; overflow: hidden; border-radius: 6px 6px 0 0; border-bottom: 1px solid rgba(255,255,255,0.1);"><img src="${meta.img}" style="width: 100%; height: 100%; object-fit: cover; opacity: 0.9;" alt="${locName}"></div>`
-                : `<div style="height: 110px; background-color: ${colors.surfaceLight}; border-radius: 6px 6px 0 0; border-bottom: 1px solid rgba(255,255,255,0.1); display: flex; align-items: center; justify-content: center; color: ${colors.aqua}; font-weight: 600; font-size: 13px; text-align: center; padding: 10px; box-sizing: border-box;">${locName}</div>`;
+                : `<div style="height: 110px; background-color: ${colors.surfaceLight}; border-radius: 6px 6px 0 0; border-bottom: 1px solid rgba(255,255,255,0.1); display: flex; align-items: center; justify-content: center; color: ${colors.orange}; font-weight: 600; font-size: 13px; text-align: center; padding: 10px; box-sizing: border-box;">${locName}</div>`;
 
             const popupContent = `
-                <div style="width: 240px; background: ${colors.surface}; color: ${colors.text}; font-family: 'Prompt', sans-serif;">
+                <div style="width: 240px; background: transparent; color: ${colors.text}; font-family: 'Prompt', sans-serif;">
                     ${imgHtml}
                     <div style="padding: 12px;">
-                        <h4 style="font-weight: 700; font-size: 14px; color: ${colors.gold}; margin: 0 0 4px 0; line-height: 1.3;">${locName}</h4>
+                        <h4 style="font-weight: 700; font-size: 14px; color: ${colors.warmGold}; margin: 0 0 4px 0; line-height: 1.3;">${locName}</h4>
                         <p style="font-size: 11px; color: ${colors.muted}; margin: 0 0 10px 0;">${meta.type}</p>
                         
                         <div style="font-size: 12px; margin-bottom: 12px; color: ${colors.text};">
                             <div style="display: flex; justify-content: space-between; margin-bottom: 4px; border-bottom: 1px dashed rgba(255,255,255,0.1); padding-bottom: 4px;">
                                 <span style="color: ${colors.muted};">ผู้เข้าชม</span>
-                                <span style="font-weight: 600; color: ${colors.aqua};">${stat.visitors.toLocaleString()}</span>
+                                <span style="font-weight: 600; color: ${colors.primary};">${stat.visitors.toLocaleString()}</span>
                             </div>
                             <div style="display: flex; justify-content: space-between; margin-bottom: 4px; border-bottom: 1px dashed rgba(255,255,255,0.1); padding-bottom: 4px;">
                                 <span style="color: ${colors.muted};">รายได้</span>
-                                <span style="font-weight: 600; color: ${colors.warmGold};">฿${stat.revenue.toLocaleString()}</span>
+                                <span style="font-weight: 600; color: ${colors.gold};">฿${stat.revenue.toLocaleString()}</span>
                             </div>
                             <div style="display: flex; justify-content: space-between;">
                                 <span style="color: ${colors.muted};">ความพอใจ</span>
-                                <span style="font-weight: 600; color: ${colors.success};">${avgSat}/5</span>
+                                <span style="font-weight: 600; color: ${colors.twilight};">${avgSat}/5</span>
                             </div>
                         </div>
 
                         <button style="width: 100%; background-color: ${colors.surfaceLight}; color: ${colors.text}; border: 1px solid rgba(255,255,255,0.2); padding: 6px; border-radius: 4px; font-size: 12px; font-weight: 600; cursor: pointer; transition: all 0.2s;"
-                                onmouseover="this.style.backgroundColor='${colors.teal}'; this.style.borderColor='${colors.teal}';" onmouseout="this.style.backgroundColor='${colors.surfaceLight}'; this.style.borderColor='rgba(255,255,255,0.2)';"
+                                onmouseover="this.style.backgroundColor='${colors.sunset}'; this.style.borderColor='${colors.sunset}';" onmouseout="this.style.backgroundColor='${colors.surfaceLight}'; this.style.borderColor='rgba(255,255,255,0.2)';"
                                 onclick="openAttractionDetail('${locName}')">
-                            ดูข้อมูลพื้นที่เชิงลึก
+                            ดูข้อมูลเชิงลึก
                         </button>
                     </div>
                 </div>
@@ -404,49 +404,49 @@ function renderAttractions(locationStats) {
         const avgSat = stat.count > 0 ? (stat.sumSat / stat.count).toFixed(1) : "0.0";
 
         const imgHtml = meta.img
-            ? `<img src="${meta.img}" class="w-full h-full object-cover opacity-80 transition-transform duration-700 group-hover:scale-105 group-hover:opacity-100" alt="${locName}">`
+            ? `<img src="${meta.img}" class="w-full h-full object-cover opacity-85 transition-transform duration-700 group-hover:scale-105 group-hover:opacity-100" alt="${locName}">`
             : `<div class="w-full h-full bg-brand-surface-light flex items-center justify-center p-6 text-center border-b border-brand-border">
-                 <span class="text-brand-aqua font-bold text-lg opacity-80">${locName}</span>
+                 <span class="text-brand-orange font-bold text-lg opacity-80">${locName}</span>
                </div>`;
 
         const card = document.createElement('div');
-        card.className = "bg-brand-surface rounded-xl border border-brand-border overflow-hidden flex flex-col group hover:border-brand-teal transition-colors shadow-lg";
+        card.className = "bg-brand-surface rounded-2xl border border-brand-border overflow-hidden flex flex-col group hover:border-brand-orange transition-colors shadow-lg backdrop-blur-md";
         
         card.innerHTML = `
             <div class="h-40 overflow-hidden relative bg-brand-bg">
-                <div class="absolute inset-0 bg-gradient-to-t from-brand-surface to-transparent z-10 opacity-60"></div>
+                <div class="absolute inset-0 bg-gradient-to-t from-[rgba(15,23,42,0.8)] to-transparent z-10"></div>
                 ${imgHtml}
             </div>
-            <div class="p-5 flex-grow flex flex-col relative z-20 -mt-6">
-                <h4 class="font-bold text-brand-gold text-base leading-tight mb-2 line-clamp-2 drop-shadow-md" title="${locName}">${locName}</h4>
+            <div class="p-5 flex-grow flex flex-col relative z-20 -mt-8">
+                <h4 class="font-bold text-brand-yellow text-base leading-tight mb-2 line-clamp-2 drop-shadow-md" title="${locName}">${locName}</h4>
                 <div class="text-xs text-brand-muted space-y-1.5 mb-4 flex-grow">
-                    <p class="flex items-center gap-1.5"><svg class="w-3.5 h-3.5 text-brand-teal" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path></svg> ${meta.district}</p>
-                    <p class="flex items-center gap-1.5"><svg class="w-3.5 h-3.5 text-brand-aqua" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z"></path></svg> ${meta.type}</p>
+                    <p class="flex items-center gap-1.5"><svg class="w-3.5 h-3.5 text-brand-orange" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path></svg> ${meta.district}</p>
+                    <p class="flex items-center gap-1.5"><svg class="w-3.5 h-3.5 text-brand-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z"></path></svg> ${meta.type}</p>
                 </div>
                 
                 <div class="grid grid-cols-2 gap-x-2 gap-y-3 text-sm border-t border-brand-border pt-4 mb-5">
                     <div>
                         <span class="block text-xs text-brand-muted">ผู้เข้าชม</span>
-                        <span class="font-bold text-brand-aqua">${stat.visitors.toLocaleString()}</span>
+                        <span class="font-bold text-brand-primary">${stat.visitors.toLocaleString()}</span>
                     </div>
                     <div>
                         <span class="block text-xs text-brand-muted">รายได้ (฿)</span>
-                        <span class="font-bold text-brand-warm-gold">${stat.revenue.toLocaleString()}</span>
+                        <span class="font-bold text-brand-gold">${stat.revenue.toLocaleString()}</span>
                     </div>
                     <div class="col-span-2">
                         <span class="block text-xs text-brand-muted">ความพึงพอใจเฉลี่ย</span>
                         <div class="flex items-center gap-1">
-                            <span class="font-bold text-brand-success">${avgSat}</span>
+                            <span class="font-bold text-brand-twilight">${avgSat}</span>
                             <span class="text-xs text-brand-muted">/ 5.0</span>
                         </div>
                     </div>
                 </div>
                 
                 <div class="grid grid-cols-2 gap-2 mt-auto">
-                    <button onclick="openAttractionDetail('${locName}')" class="bg-brand-surface-light border border-brand-border hover:bg-brand-primary text-brand-text text-xs font-semibold py-2 rounded-lg transition-colors flex items-center justify-center">
+                    <button onclick="openAttractionDetail('${locName}')" class="bg-brand-surface-light border border-brand-border hover:bg-brand-primary text-brand-text text-xs font-semibold py-2 rounded-xl transition-colors flex items-center justify-center">
                         ข้อมูลเชิงลึก
                     </button>
-                    <button onclick="focusOnMap('${locName}')" class="bg-brand-teal hover:bg-brand-aqua hover:text-brand-surface text-white text-xs font-semibold py-2 rounded-lg transition-colors flex items-center justify-center">
+                    <button onclick="focusOnMap('${locName}')" class="bg-brand-orange hover:bg-brand-yellow hover:text-brand-bg text-white text-xs font-semibold py-2 rounded-xl transition-colors flex items-center justify-center">
                         ระบุพิกัด
                     </button>
                 </div>
@@ -531,7 +531,7 @@ function focusOnMap(locName) {
 }
 
 // ==========================================
-// PHASE 3: DATA MINING & DSS LOGIC (Dark Theme)
+// PHASE 3: DATA MINING & DSS LOGIC 
 // ==========================================
 function renderDataMining(data) {
     const containerCards = document.getElementById('dssClusterCards');
@@ -580,22 +580,22 @@ function renderDataMining(data) {
 
         let traitDescription = "";
         if (stat.arpu > avgSystemArpu) {
-            traitDescription += "มีกำลังซื้อและใช้จ่ายเฉลี่ยสูง ";
+            traitDescription += "กลุ่มที่มีกำลังซื้อสูง (High Spender) ";
         } else {
-            traitDescription += "เน้นความคุ้มค่าของการเดินทาง ";
+            traitDescription += "กลุ่มเน้นความคุ้มค่า (Value Seeker) ";
         }
         if (stat.visitors > avgSystemVis) {
-            traitDescription += "เป็นกลุ่มกระแสหลัก (Mainstream)";
+            traitDescription += "ตลาดหลัก (Mainstream)";
         } else {
-            traitDescription += "เป็นกลุ่มเป้าหมายเฉพาะ (Niche)";
+            traitDescription += "ตลาดเฉพาะกลุ่ม (Niche)";
         }
 
         containerCards.innerHTML += `
-            <div class="bg-brand-surface-light p-5 rounded-xl border border-brand-border flex flex-col relative overflow-hidden">
-                <div class="absolute right-0 top-0 opacity-10 p-2">
-                    <svg class="w-12 h-12 text-brand-gold" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path></svg>
+            <div class="bg-brand-surface-light p-5 rounded-2xl border border-brand-border flex flex-col relative overflow-hidden group">
+                <div class="absolute right-0 top-0 opacity-10 p-2 transform group-hover:scale-110 transition-transform duration-500">
+                    <svg class="w-16 h-16 text-brand-yellow" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path></svg>
                 </div>
-                <h4 class="font-bold text-lg text-brand-aqua mb-1 relative z-10">${c}</h4>
+                <h4 class="font-bold text-lg text-brand-orange mb-1 relative z-10">${c}</h4>
                 <div class="text-xs text-brand-muted mb-4 border-b border-brand-border pb-3 relative z-10">ปริมาณข้อมูล: ${stat.visitors.toLocaleString()} คน (${stat.pct.toFixed(1)}%)</div>
                 
                 <div class="space-y-3 text-sm flex-grow relative z-10">
@@ -605,12 +605,12 @@ function renderDataMining(data) {
                     </div>
                     <div class="flex justify-between items-center">
                         <span class="text-brand-muted">ความพึงพอใจเฉลี่ย:</span>
-                        <span class="font-semibold text-brand-success">${stat.avgSat.toFixed(2)}</span>
+                        <span class="font-semibold text-brand-twilight">${stat.avgSat.toFixed(2)}</span>
                     </div>
                 </div>
                 
-                <div class="text-xs text-brand-muted bg-brand-surface p-3 rounded mt-4 border border-brand-border relative z-10">
-                    <span class="font-semibold text-brand-teal block mb-1">ลักษณะทางสถิติ:</span>
+                <div class="text-xs text-brand-muted bg-brand-bg/50 p-3 rounded-xl mt-4 border border-brand-border relative z-10">
+                    <span class="font-semibold text-brand-primary block mb-1">ลักษณะทางสถิติ:</span>
                     ${traitDescription}
                 </div>
             </div>
@@ -619,20 +619,20 @@ function renderDataMining(data) {
         let action = "";
         
         if (stat.arpu > avgSystemArpu && stat.visitors <= avgSystemVis) {
-            action = `กลุ่ม <strong>${c}</strong> มีรายได้ต่อคนสูง (<span class="text-brand-gold">฿${Math.round(stat.arpu).toLocaleString()}</span>) แต่ปริมาณยังน้อย ควรพิจารณาจัดสรรงบการตลาดเชิงรุกเพื่อเจาะกลุ่มนี้เพิ่มเติม`;
+            action = `กลุ่ม <strong>${c}</strong> มีรายได้ต่อคนสูง (<span class="text-brand-gold">฿${Math.round(stat.arpu).toLocaleString()}</span>) ควรจัดแคมเปญกระตุ้นยอดขายเพิ่มเติม`;
         } else if (stat.visitors > avgSystemVis && stat.avgSat < avgSystemSat) {
-            action = `กลุ่ม <strong>${c}</strong> มีปริมาณสูง แต่ความพึงพอใจลดต่ำลง (<span class="text-brand-danger">${stat.avgSat.toFixed(2)}</span>) ควรเร่งตรวจสอบคุณภาพและมาตรฐานการให้บริการ`;
+            action = `กลุ่ม <strong>${c}</strong> มีปริมาณสูง แต่ความพึงพอใจลดลง ควรตรวจสอบมาตรฐานบริการ`;
         } else if (stat.arpu > avgSystemArpu && stat.visitors > avgSystemVis) {
-            action = `กลุ่ม <strong>${c}</strong> เป็นกลุ่มแกนหลักที่ผลักดันรายได้ ควรมีมาตรการรักษามาตรฐานความพึงพอใจและต่อยอด Loyalty Program`;
+            action = `กลุ่ม <strong>${c}</strong> คือฐานลูกค้าหลัก ควรสร้าง Loyalty Program ต่อเนื่อง`;
         } else {
-            action = `กลุ่ม <strong>${c}</strong> มีศักยภาพในการเติมเต็มช่วงนอกเทศกาล ควรพัฒนาแพ็กเกจท่องเที่ยวระยะสั้นที่สอดคล้องกับพฤติกรรม`;
+            action = `กลุ่ม <strong>${c}</strong> เหมาะสำหรับแพ็กเกจระยะสั้นเพื่อเติมเต็มช่วง Low Season`;
         }
 
         if (index === 0) dashboardRecFirst = action;
 
         recsHTML += `
-            <div class="flex items-start gap-3 p-3 hover:bg-brand-surface-light rounded-lg transition-colors border-b border-brand-border last:border-0">
-                <svg class="w-5 h-5 text-brand-teal flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+            <div class="flex items-start gap-3 p-3 hover:bg-brand-surface-light rounded-xl transition-colors border-b border-brand-border last:border-0">
+                <svg class="w-5 h-5 text-brand-orange flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
                 <p class="text-sm text-brand-text leading-relaxed">${action}</p>
             </div>
         `;
@@ -647,10 +647,11 @@ function renderDataMining(data) {
 function drawDssScatterChart(data) {
     const ctx = document.getElementById('dssScatterChart').getContext('2d');
     
+    // Matches the sunset colors
     const clusterColors = {
-        "Family Chill-Out": "rgba(21, 154, 156, 0.7)", // Teal
-        "Solo Explorer": "rgba(232, 198, 106, 0.7)",  // Warm Gold
-        "Festival Spenders": "rgba(110, 214, 209, 0.7)" // Aqua
+        "Family Chill-Out": "rgba(249, 115, 22, 0.8)",  // Sunset Orange
+        "Solo Explorer": "rgba(96, 165, 250, 0.8)",     // Sky Blue
+        "Festival Spenders": "rgba(192, 132, 252, 0.8)" // Twilight Purple
     };
 
     const datasets = [];
@@ -671,11 +672,11 @@ function drawDssScatterChart(data) {
             label: clusterName,
             data: clusterPoints,
             backgroundColor: clusterColors[clusterName] || colors.muted,
-            borderColor: clusterColors[clusterName] ? clusterColors[clusterName].replace('0.7', '1') : colors.muted,
+            borderColor: clusterColors[clusterName] ? clusterColors[clusterName].replace('0.8', '1') : colors.muted,
             borderWidth: 1,
             pointRadius: (ctx) => {
                 let v = ctx.raw ? ctx.raw.visitors : 10;
-                return Math.max(4, Math.min(20, v / 15));
+                return Math.max(4, Math.min(22, v / 12));
             },
             pointHoverRadius: 10
         });
@@ -705,8 +706,8 @@ function drawDssScatterChart(data) {
             },
             plugins: {
                 tooltip: {
-                    backgroundColor: 'rgba(13, 38, 56, 0.95)',
-                    titleColor: colors.aqua,
+                    backgroundColor: 'rgba(15, 23, 42, 0.95)',
+                    titleColor: colors.orange,
                     bodyColor: colors.text,
                     borderColor: colors.border,
                     borderWidth: 1,
@@ -717,7 +718,7 @@ function drawDssScatterChart(data) {
                 },
                 legend: {
                     position: 'bottom',
-                    labels: { usePointStyle: true, boxWidth: 8, color: colors.muted }
+                    labels: { usePointStyle: true, boxWidth: 8, color: colors.text }
                 }
             }
         }
@@ -755,10 +756,11 @@ function drawVisitorChart(data) {
     const yearsPresent = [...new Set(data.map(d => d.year))].sort();
     const datasets = [];
     
+    // Assigning vibrant sunset colors to different years
     const yearThemeColors = {
-        2024: colors.aqua,      // Soft Aqua for most recent
-        2023: colors.teal,      // Teal for middle
-        2022: colors.gold       // Naga Gold for oldest
+        2024: colors.sunset,      // Orange for latest
+        2023: colors.gold,        // Gold for mid
+        2022: colors.twilight     // Purple for oldest
     };
 
     yearsPresent.forEach(yr => {
@@ -777,14 +779,14 @@ function drawVisitorChart(data) {
             data: monthsOrder.map(m => visitorsByMonth[m]),
             borderColor: color,
             backgroundColor: isSingleYear ? color.replace('rgb', 'rgba').replace(')', ', 0.15)') : 'transparent',
-            borderWidth: 2,
-            tension: 0.4, // Smoother wave lines
+            borderWidth: 2.5,
+            tension: 0.4, 
             fill: isSingleYear,
-            pointBackgroundColor: colors.surface,
+            pointBackgroundColor: colors.bg,
             pointBorderColor: color,
             pointBorderWidth: 2,
             pointRadius: 4,
-            pointHoverRadius: 6
+            pointHoverRadius: 7
         });
     });
 
@@ -802,8 +804,8 @@ function drawVisitorChart(data) {
             plugins: {
                 legend: { display: true, position: 'top', align: 'end', labels: { color: colors.text } },
                 tooltip: { 
-                    backgroundColor: 'rgba(13, 38, 56, 0.95)',
-                    titleColor: colors.aqua,
+                    backgroundColor: 'rgba(15, 23, 42, 0.95)',
+                    titleColor: colors.orange,
                     bodyColor: colors.text,
                     borderColor: colors.border,
                     borderWidth: 1 
@@ -824,6 +826,12 @@ function drawRevenueChart(data) {
 
     if (revenueChartInstance) revenueChartInstance.destroy();
     
+    // Create a beautiful gradient for the bars
+    let gradient = ctx.createLinearGradient(0, 0, 400, 0);
+    gradient.addColorStop(0, colors.twilight);
+    gradient.addColorStop(0.5, colors.sunset);
+    gradient.addColorStop(1, colors.warmGold);
+
     revenueChartInstance = new Chart(ctx, {
         type: 'bar',
         data: { 
@@ -831,9 +839,8 @@ function drawRevenueChart(data) {
             datasets: [{ 
                 label: 'รายได้ชุมชน (บาท)', 
                 data: values, 
-                backgroundColor: colors.teal, 
-                hoverBackgroundColor: colors.aqua,
-                borderRadius: 4,
+                backgroundColor: gradient, 
+                borderRadius: 6,
                 barThickness: 'flex',
                 maxBarThickness: 30
             }] 
@@ -849,8 +856,8 @@ function drawRevenueChart(data) {
             plugins: {
                 legend: { display: false },
                 tooltip: { 
-                    backgroundColor: 'rgba(13, 38, 56, 0.95)',
-                    titleColor: colors.gold,
+                    backgroundColor: 'rgba(15, 23, 42, 0.95)',
+                    titleColor: colors.warmGold,
                     bodyColor: colors.text,
                     borderColor: colors.border,
                     borderWidth: 1 

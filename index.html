@@ -15,28 +15,26 @@
     
     <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     
-    <!-- Tailwind Configuration (Mystical Mekong Theme) -->
+    <!-- Tailwind Configuration (Sunset Glassmorphism Theme) -->
     <script>
         tailwind.config = {
             theme: {
                 extend: {
                     colors: {
                         brand: {
-                            bg: '#061A2B',            // Deep Ocean
-                            surface: '#0D2638',       // Surface
-                            'surface-light': '#12384A', // Surface Light
-                            mekong: '#073B4C',        // Deep Mekong
-                            primary: '#0B6E7A',       // Water
-                            teal: '#159A9C',          // Teal
-                            aqua: '#6ED6D1',          // Soft Aqua
-                            gold: '#D6B25E',          // Naga Gold
-                            'warm-gold': '#E8C66A',   // Warm Gold
-                            text: '#F5F7FA',          // Text
-                            muted: '#A9BBC5',         // Muted Text
-                            border: 'rgba(255, 255, 255, 0.10)', // Border
-                            success: '#4FB286',
-                            warning: '#E8B65A',
-                            danger: '#D96C6C'
+                            bg: '#0F172A',
+                            surface: 'rgba(15, 23, 42, 0.6)',
+                            'surface-light': 'rgba(30, 41, 59, 0.65)',
+                            blue: '#60A5FA',    // Sky Blue
+                            orange: '#F97316',  // Sunset Orange
+                            purple: '#C084FC',  // Twilight Purple
+                            gold: '#F59E0B',    // Naga Gold
+                            yellow: '#FDE047',  // Sun Yellow
+                            text: '#F8FAFC',
+                            muted: '#94A3B8',
+                            border: 'rgba(255, 255, 255, 0.15)',
+                            success: '#34D399',
+                            danger: '#F87171'
                         }
                     },
                     fontFamily: {
@@ -50,121 +48,94 @@
     <style>
         body { 
             font-family: 'Prompt', sans-serif; 
-            background-color: #061A2B; 
-            color: #F5F7FA; 
+            /* THE BACKGROUND IMAGE */
+            background-image: url('bg-naga.png'); 
+            background-size: cover;
+            background-position: center;
+            background-attachment: fixed;
+            color: #F8FAFC; 
             overflow-x: hidden;
+            min-height: 100vh;
         }
         
-        /* Subtle Underwater Animations */
-        @keyframes water-shimmer {
-            0% { background-position: 0% 50%; }
-            50% { background-position: 100% 50%; }
-            100% { background-position: 0% 50%; }
-        }
-        @keyframes float-slow {
-            0% { transform: translateY(0px) rotate(0deg); }
-            50% { transform: translateY(-15px) rotate(2deg); }
-            100% { transform: translateY(0px) rotate(0deg); }
-        }
-        
-        .bg-underwater {
-            background: linear-gradient(-45deg, #061A2B, #073B4C, #061A2B);
-            background-size: 400% 400%;
-            animation: water-shimmer 20s ease infinite;
-            position: relative;
-        }
-        
-        /* Caustics Effect (Light rays from above) */
-        .water-caustics {
-            position: absolute;
+        /* Dark Gradient Overlay to ensure text readability against bright sunset */
+        body::before {
+            content: '';
+            position: fixed;
             inset: 0;
-            background: radial-gradient(ellipse at 50% 0%, rgba(110, 214, 209, 0.15) 0%, transparent 70%);
-            pointer-events: none;
-            z-index: 0;
+            background: linear-gradient(135deg, rgba(15, 23, 42, 0.9) 0%, rgba(15, 23, 42, 0.3) 50%, rgba(15, 23, 42, 0.85) 100%);
+            z-index: -1;
         }
 
-        /* Glassmorphism for Panels (Subtle) */
+        /* Glassmorphism Panels */
         .glass-panel {
-            background: rgba(13, 38, 56, 0.65);
-            backdrop-filter: blur(12px);
-            -webkit-backdrop-filter: blur(12px);
-            border: 1px solid rgba(255, 255, 255, 0.08);
-            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+            background: rgba(15, 23, 42, 0.55);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid rgba(255, 255, 255, 0.12);
+            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.3);
+        }
+        .glass-panel:hover {
+            border: 1px solid rgba(255, 255, 255, 0.25);
+            background: rgba(15, 23, 42, 0.65);
         }
 
         /* Map Tweaks for Dark Theme */
         .map-tiles-dark { filter: brightness(0.7) invert(1) contrast(1.5) hue-rotate(180deg) sepia(30%); }
-        .leaflet-container { background: #061A2B; }
+        .leaflet-container { background: rgba(15, 23, 42, 0.8); }
         .leaflet-popup-content-wrapper { 
-            background: #0D2638; 
-            color: #F5F7FA;
-            border: 1px solid rgba(214, 178, 94, 0.3); /* Naga gold subtle border */
-            border-radius: 6px;
+            background: rgba(15, 23, 42, 0.9); 
+            backdrop-filter: blur(10px);
+            color: #F8FAFC;
+            border: 1px solid rgba(245, 158, 11, 0.4); /* Gold border */
+            border-radius: 8px;
             box-shadow: 0 10px 25px rgba(0,0,0,0.5);
         }
-        .leaflet-popup-tip { background: #0D2638; border: 1px solid rgba(214, 178, 94, 0.3); }
-        .leaflet-control-zoom a { background-color: #12384A !important; color: #6ED6D1 !important; border-color: rgba(255,255,255,0.1) !important;}
+        .leaflet-popup-tip { background: rgba(15, 23, 42, 0.9); border: 1px solid rgba(245, 158, 11, 0.4); }
+        .leaflet-control-zoom a { background-color: rgba(30, 41, 59, 0.8) !important; color: #F97316 !important; border-color: rgba(255,255,255,0.1) !important;}
         
         /* Scrollbar */
         ::-webkit-scrollbar { width: 6px; height: 6px; }
-        ::-webkit-scrollbar-track { background: #061A2B; }
-        ::-webkit-scrollbar-thumb { background: #12384A; border-radius: 3px; border: 1px solid rgba(255,255,255,0.1); }
-        ::-webkit-scrollbar-thumb:hover { background: #159A9C; }
+        ::-webkit-scrollbar-track { background: rgba(15, 23, 42, 0.5); }
+        ::-webkit-scrollbar-thumb { background: rgba(249, 115, 22, 0.5); border-radius: 3px; border: 1px solid rgba(255,255,255,0.1); }
+        ::-webkit-scrollbar-thumb:hover { background: #F97316; }
 
         /* Inputs & Selects */
-        select option { background-color: #0D2638; color: #F5F7FA; }
-        
-        /* Abstract Naga Element */
-        .naga-curve {
-            position: absolute;
-            right: -5%;
-            top: -10%;
-            width: 50%;
-            height: 120%;
-            background-image: url('data:image/svg+xml;utf8,<svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg"><path fill="rgba(214, 178, 94, 0.05)" d="M45.7,-76.3C58.9,-69.3,68.8,-55.1,76.5,-40.4C84.2,-25.6,89.7,-10.4,87.8,3.7C85.8,17.7,76.5,30.6,67.1,43.2C57.6,55.8,48,68,35.4,75.4C22.8,82.8,7.2,85.3,-7.4,83.9C-21.9,82.6,-35.3,77.5,-48.2,70.2C-61.1,63,-73.4,53.6,-80.7,40.9C-87.9,28.2,-90.1,12.3,-88.3,-2.8C-86.5,-18,-80.7,-32.2,-71.9,-43.8C-63,-55.4,-51,-64.3,-38.3,-71.4C-25.5,-78.4,-12.8,-83.6,1.4,-85.2C15.5,-86.9,32.5,-83.4,45.7,-76.3Z" transform="translate(100 100)" /></svg>');
-            background-repeat: no-repeat;
-            background-size: contain;
-            pointer-events: none;
-            z-index: 0;
-            animation: float-slow 10s ease-in-out infinite;
-        }
+        select option { background-color: #0F172A; color: #F8FAFC; }
     </style>
 </head>
-<body class="p-4 md:p-6 lg:p-8 min-h-screen">
-    <!-- Global Decorative Caustics -->
-    <div class="water-caustics"></div>
-
+<body class="p-4 md:p-6 lg:p-8">
+    
     <div class="max-w-7xl mx-auto relative z-10">
 
-        <!-- HEADER (NAGA MEKONG HERO) -->
-        <header class="bg-underwater p-6 md:p-8 rounded-xl mb-6 flex flex-col md:flex-row justify-between items-start md:items-center border border-brand-border relative overflow-hidden glass-panel">
-            <div class="naga-curve"></div>
+        <!-- HEADER -->
+        <header class="p-6 md:p-8 rounded-2xl mb-6 flex flex-col md:flex-row justify-between items-start md:items-center relative overflow-hidden glass-panel border-b-4 border-brand-orange">
             <div class="relative z-10">
-                <h1 class="text-3xl md:text-4xl font-bold tracking-tight mb-2 text-transparent bg-clip-text bg-gradient-to-r from-brand-aqua to-brand-warm-gold">
+                <h1 class="text-3xl md:text-4xl font-bold tracking-tight mb-2 text-transparent bg-clip-text bg-gradient-to-r from-brand-yellow via-brand-orange to-brand-purple drop-shadow-md">
                     NAGA MEKONG
                 </h1>
-                <p class="text-brand-muted text-sm md:text-base font-light tracking-wide">
+                <p class="text-brand-muted text-sm md:text-base font-medium tracking-wide">
                     ระบบสนับสนุนการตัดสินใจด้านการท่องเที่ยว จังหวัดนครพนม (Tourism DSS)
                 </p>
             </div>
-            <div class="relative z-10 mt-4 md:mt-0 flex items-center gap-3 bg-brand-surface-light px-4 py-2 rounded-full border border-brand-border">
-                <svg class="w-5 h-5 text-brand-aqua" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
+            <div class="relative z-10 mt-4 md:mt-0 flex items-center gap-3 bg-brand-surface px-4 py-2 rounded-full border border-brand-border">
+                <svg class="w-5 h-5 text-brand-orange" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
                 <span class="text-sm font-medium text-brand-text">Data-Driven Insights</span>
             </div>
         </header>
 
         <!-- GLOBAL FILTERS -->
-        <div class="glass-panel p-6 rounded-xl mb-6">
+        <div class="glass-panel p-6 rounded-2xl mb-6 transition-all duration-300">
             <div class="flex flex-col lg:flex-row justify-between items-start lg:items-end gap-6 mb-4">
                 <div class="w-full lg:w-auto flex-grow">
                     <div class="flex items-center gap-2 mb-4">
-                        <svg class="w-5 h-5 text-brand-gold" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z"></path></svg>
-                        <h2 class="font-semibold text-brand-text text-lg">ตัวกรองข้อมูล (Global Filter)</h2>
+                        <svg class="w-5 h-5 text-brand-yellow" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z"></path></svg>
+                        <h2 class="font-semibold text-brand-text text-lg tracking-wide">ตัวกรองข้อมูล (Global Filter)</h2>
                     </div>
                     <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
                         <!-- Year -->
-                        <div class="bg-brand-bg/50 p-3 rounded-lg border border-brand-border hover:border-brand-aqua/50 transition-colors">
-                            <label class="block text-xs text-brand-muted mb-1 font-medium">ปี (Year)</label>
+                        <div class="bg-brand-surface p-3 rounded-xl border border-brand-border hover:border-brand-orange transition-colors">
+                            <label class="block text-xs text-brand-muted mb-1 font-medium uppercase tracking-wider">ปี (Year)</label>
                             <select id="filterYear" class="w-full bg-transparent text-sm text-brand-text outline-none font-medium cursor-pointer appearance-none">
                                 <option value="all">ทุกปี (3 ปีล่าสุด)</option>
                                 <option value="2024">2024</option>
@@ -173,8 +144,8 @@
                             </select>
                         </div>
                         <!-- Location -->
-                        <div class="bg-brand-bg/50 p-3 rounded-lg border border-brand-border hover:border-brand-aqua/50 transition-colors">
-                            <label class="block text-xs text-brand-muted mb-1 font-medium">สถานที่ท่องเที่ยว</label>
+                        <div class="bg-brand-surface p-3 rounded-xl border border-brand-border hover:border-brand-orange transition-colors">
+                            <label class="block text-xs text-brand-muted mb-1 font-medium uppercase tracking-wider">สถานที่</label>
                             <select id="filterLocation" class="w-full bg-transparent text-sm text-brand-text outline-none font-medium cursor-pointer appearance-none">
                                 <option value="all">ทุกสถานที่</option>
                                 <option value="ลานพญาศรีสัตตนาคราช">ลานพญาศรีสัตตนาคราช</option>
@@ -191,8 +162,8 @@
                             </select>
                         </div>
                         <!-- Festival -->
-                        <div class="bg-brand-bg/50 p-3 rounded-lg border border-brand-border hover:border-brand-aqua/50 transition-colors">
-                            <label class="block text-xs text-brand-muted mb-1 font-medium">ช่วงเทศกาล</label>
+                        <div class="bg-brand-surface p-3 rounded-xl border border-brand-border hover:border-brand-orange transition-colors">
+                            <label class="block text-xs text-brand-muted mb-1 font-medium uppercase tracking-wider">ช่วงเทศกาล</label>
                             <select id="filterFestival" class="w-full bg-transparent text-sm text-brand-text outline-none font-medium cursor-pointer appearance-none">
                                 <option value="all">ทั้งหมด (All)</option>
                                 <option value="true">เฉพาะช่วงเทศกาล</option>
@@ -200,8 +171,8 @@
                             </select>
                         </div>
                         <!-- Traveler Group -->
-                        <div class="bg-brand-bg/50 p-3 rounded-lg border border-brand-border hover:border-brand-aqua/50 transition-colors">
-                            <label class="block text-xs text-brand-muted mb-1 font-medium">กลุ่มนักท่องเที่ยว</label>
+                        <div class="bg-brand-surface p-3 rounded-xl border border-brand-border hover:border-brand-orange transition-colors">
+                            <label class="block text-xs text-brand-muted mb-1 font-medium uppercase tracking-wider">กลุ่มนักท่องเที่ยว</label>
                             <select id="filterStyle" class="w-full bg-transparent text-sm text-brand-text outline-none font-medium cursor-pointer appearance-none">
                                 <option value="all">ทั้งหมด (All)</option>
                                 <option value="ลุยเดี่ยว">ลุยเดี่ยว (Solo)</option>
@@ -210,8 +181,8 @@
                             </select>
                         </div>
                         <!-- Satisfaction -->
-                        <div class="bg-brand-bg/50 p-3 rounded-lg border border-brand-border hover:border-brand-aqua/50 transition-colors">
-                            <label class="block text-xs text-brand-muted mb-1 font-medium">ระดับความพึงพอใจ</label>
+                        <div class="bg-brand-surface p-3 rounded-xl border border-brand-border hover:border-brand-orange transition-colors">
+                            <label class="block text-xs text-brand-muted mb-1 font-medium uppercase tracking-wider">ความพึงพอใจ</label>
                             <select id="filterScore" class="w-full bg-transparent text-sm text-brand-text outline-none font-medium cursor-pointer appearance-none">
                                 <option value="all">ทุกระดับคะแนน</option>
                                 <option value="high">4.0 - 5.0 (พอใจมาก)</option>
@@ -222,10 +193,10 @@
                     </div>
                 </div>
                 <!-- Record Count -->
-                <div class="bg-brand-surface-light border border-brand-border px-5 py-4 rounded-xl text-right w-full lg:w-auto min-w-[200px]">
-                    <p class="text-xs text-brand-muted mb-1">จำนวนข้อมูล (Records)</p>
+                <div class="bg-brand-surface border border-brand-border px-5 py-4 rounded-xl text-right w-full lg:w-auto min-w-[200px]">
+                    <p class="text-xs text-brand-muted mb-1 uppercase tracking-wider">จำนวนข้อมูล (Records)</p>
                     <div class="flex items-end justify-start lg:justify-end gap-2">
-                        <span id="recordCountActive" class="text-3xl font-bold text-brand-aqua leading-none">0</span>
+                        <span id="recordCountActive" class="text-3xl font-bold text-brand-orange leading-none drop-shadow">0</span>
                         <span id="recordCountTotal" class="text-sm text-brand-muted leading-relaxed">/ 0</span>
                     </div>
                 </div>
@@ -233,23 +204,23 @@
         </div>
 
         <!-- NAVIGATION TABS -->
-        <nav class="flex border-b border-brand-border mb-8 overflow-x-auto hide-scrollbar gap-2">
-            <button onclick="switchTab('dashboard')" id="nav-dashboard" class="flex items-center gap-2 px-6 py-3 rounded-t-lg bg-brand-surface border-b-2 border-brand-gold text-brand-gold font-semibold transition whitespace-nowrap">
-                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4 6h16M4 12h16M4 18h16"></path></svg>
+        <nav class="flex border-b border-brand-border/50 mb-8 overflow-x-auto hide-scrollbar gap-2">
+            <button onclick="switchTab('dashboard')" id="nav-dashboard" class="flex items-center gap-2 px-6 py-3 rounded-t-xl bg-brand-surface border-b-2 border-brand-orange text-brand-yellow font-semibold transition whitespace-nowrap">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path></svg>
                 ภาพรวม (Overview)
             </button>
-            <button onclick="switchTab('attractions')" id="nav-attractions" class="flex items-center gap-2 px-6 py-3 rounded-t-lg bg-transparent border-b-2 border-transparent text-brand-muted hover:text-brand-text hover:bg-brand-surface-light transition whitespace-nowrap">
-                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path></svg>
+            <button onclick="switchTab('attractions')" id="nav-attractions" class="flex items-center gap-2 px-6 py-3 rounded-t-xl bg-transparent border-b-2 border-transparent text-brand-muted hover:text-brand-text hover:bg-brand-surface transition whitespace-nowrap">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path></svg>
                 สถานที่ท่องเที่ยว (Attractions)
             </button>
-            <button onclick="switchTab('datamining')" id="nav-datamining" class="flex items-center gap-2 px-6 py-3 rounded-t-lg bg-transparent border-b-2 border-transparent text-brand-muted hover:text-brand-text hover:bg-brand-surface-light transition whitespace-nowrap">
-                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path></svg>
+            <button onclick="switchTab('datamining')" id="nav-datamining" class="flex items-center gap-2 px-6 py-3 rounded-t-xl bg-transparent border-b-2 border-transparent text-brand-muted hover:text-brand-text hover:bg-brand-surface transition whitespace-nowrap">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path></svg>
                 การวิเคราะห์ข้อมูล (Data Analysis)
             </button>
         </nav>
 
         <!-- GLOBAL EMPTY STATE WARNING -->
-        <div id="globalEmptyState" class="hidden glass-panel border-l-4 border-brand-danger text-brand-text p-6 rounded-lg mb-6 flex items-start gap-4 shadow-sm">
+        <div id="globalEmptyState" class="hidden glass-panel border-l-4 border-brand-danger text-brand-text p-6 rounded-xl mb-6 flex items-start gap-4">
             <svg class="w-6 h-6 text-brand-danger mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
             <div>
                 <h4 class="font-bold text-base mb-1">ไม่พบข้อมูลที่ตรงกับเงื่อนไขที่เลือก</h4>
@@ -264,79 +235,79 @@
 
             <!-- KPIs Cards -->
             <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6">
-                <!-- Visitors -->
-                <div class="glass-panel p-6 rounded-xl relative overflow-hidden group">
-                    <div class="absolute inset-0 bg-brand-aqua opacity-0 group-hover:opacity-5 transition-opacity"></div>
+                <!-- Visitors (Blue Sky) -->
+                <div class="glass-panel p-6 rounded-2xl relative overflow-hidden group border-t-2 border-brand-blue">
+                    <div class="absolute inset-0 bg-brand-blue opacity-0 group-hover:opacity-10 transition-opacity"></div>
                     <div class="flex justify-between items-start mb-4 relative z-10">
                         <p class="text-brand-muted text-sm font-medium">จำนวนนักท่องเที่ยว</p>
-                        <div class="p-2 bg-brand-surface-light rounded-lg border border-brand-border text-brand-aqua">
-                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"></path></svg>
+                        <div class="p-2 bg-brand-surface rounded-lg border border-brand-border text-brand-blue">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"></path></svg>
                         </div>
                     </div>
-                    <h2 class="text-2xl font-bold text-brand-aqua" id="kpiVisitors">0 <span class="text-sm font-normal text-brand-muted">คน</span></h2>
+                    <h2 class="text-2xl font-bold text-brand-blue drop-shadow-sm" id="kpiVisitors">0 <span class="text-sm font-normal text-brand-muted">คน</span></h2>
                 </div>
-                <!-- Revenue -->
-                <div class="glass-panel p-6 rounded-xl relative overflow-hidden group">
-                    <div class="absolute inset-0 bg-brand-gold opacity-0 group-hover:opacity-5 transition-opacity"></div>
+                <!-- Revenue (Gold) -->
+                <div class="glass-panel p-6 rounded-2xl relative overflow-hidden group border-t-2 border-brand-gold">
+                    <div class="absolute inset-0 bg-brand-gold opacity-0 group-hover:opacity-10 transition-opacity"></div>
                     <div class="flex justify-between items-start mb-4 relative z-10">
                         <p class="text-brand-muted text-sm font-medium">รายได้รวม</p>
-                        <div class="p-2 bg-brand-surface-light rounded-lg border border-brand-border text-brand-gold">
-                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                        <div class="p-2 bg-brand-surface rounded-lg border border-brand-border text-brand-gold">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
                         </div>
                     </div>
-                    <h2 class="text-2xl font-bold text-brand-gold" id="kpiRevenue">0 <span class="text-sm font-normal text-brand-muted">บาท</span></h2>
+                    <h2 class="text-2xl font-bold text-brand-gold drop-shadow-sm" id="kpiRevenue">0 <span class="text-sm font-normal text-brand-muted">บาท</span></h2>
                 </div>
-                <!-- ARPU -->
-                <div class="glass-panel p-6 rounded-xl relative overflow-hidden group">
-                    <div class="absolute inset-0 bg-brand-teal opacity-0 group-hover:opacity-5 transition-opacity"></div>
+                <!-- ARPU (Orange) -->
+                <div class="glass-panel p-6 rounded-2xl relative overflow-hidden group border-t-2 border-brand-orange">
+                    <div class="absolute inset-0 bg-brand-orange opacity-0 group-hover:opacity-10 transition-opacity"></div>
                     <div class="flex justify-between items-start mb-4 relative z-10">
-                        <p class="text-brand-muted text-sm font-medium cursor-help border-b border-dashed border-brand-muted" title="ARPU = รายได้รวม ÷ จำนวนนักท่องเที่ยว">
-                            รายได้เฉลี่ยต่อคน (ARPU)
+                        <p class="text-brand-muted text-sm font-medium cursor-help border-b border-dashed border-brand-muted">
+                            รายได้เฉลี่ยต่อคน
                         </p>
-                        <div class="p-2 bg-brand-surface-light rounded-lg border border-brand-border text-brand-teal">
-                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z"></path></svg>
+                        <div class="p-2 bg-brand-surface rounded-lg border border-brand-border text-brand-orange">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z"></path></svg>
                         </div>
                     </div>
-                    <h2 class="text-2xl font-bold text-brand-teal" id="kpiArpu">0 <span class="text-sm font-normal text-brand-muted">บาท</span></h2>
+                    <h2 class="text-2xl font-bold text-brand-orange drop-shadow-sm" id="kpiArpu">0 <span class="text-sm font-normal text-brand-muted">บาท</span></h2>
                 </div>
-                <!-- Satisfaction -->
-                <div class="glass-panel p-6 rounded-xl relative overflow-hidden group">
-                    <div class="absolute inset-0 bg-brand-success opacity-0 group-hover:opacity-5 transition-opacity"></div>
+                <!-- Satisfaction (Purple) -->
+                <div class="glass-panel p-6 rounded-2xl relative overflow-hidden group border-t-2 border-brand-purple">
+                    <div class="absolute inset-0 bg-brand-purple opacity-0 group-hover:opacity-10 transition-opacity"></div>
                     <div class="flex justify-between items-start mb-4 relative z-10">
-                        <p class="text-brand-muted text-sm font-medium">ความพึงพอใจเฉลี่ย</p>
-                        <div class="p-2 bg-brand-surface-light rounded-lg border border-brand-border text-brand-success">
-                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M14.828 14.828a4 4 0 01-5.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                        <p class="text-brand-muted text-sm font-medium">ความพึงพอใจ</p>
+                        <div class="p-2 bg-brand-surface rounded-lg border border-brand-border text-brand-purple">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.828 14.828a4 4 0 01-5.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
                         </div>
                     </div>
-                    <h2 class="text-2xl font-bold text-brand-success" id="kpiSatisfaction">0.0 <span class="text-sm font-normal text-brand-muted">/ 5</span></h2>
+                    <h2 class="text-2xl font-bold text-brand-purple drop-shadow-sm" id="kpiSatisfaction">0.0 <span class="text-sm font-normal text-brand-muted">/ 5</span></h2>
                 </div>
             </div>
 
             <!-- TREND ANALYSIS & PREDICTION -->
             <div class="grid grid-cols-1 lg:grid-cols-4 gap-6">
                 <!-- Trend Chart -->
-                <div class="lg:col-span-3 glass-panel p-6 rounded-xl flex flex-col border border-brand-border">
+                <div class="lg:col-span-3 glass-panel p-6 rounded-2xl flex flex-col">
                     <div class="mb-4">
                         <h3 class="text-base font-bold text-brand-text">แนวโน้มจำนวนนักท่องเที่ยว (Trend Analysis)</h3>
-                        <p class="text-xs text-brand-muted">วิเคราะห์ปริมาณการเข้าชมแบ่งตามรายเดือนและเปรียบเทียบปี (YoY)</p>
+                        <p class="text-xs text-brand-muted">วิเคราะห์ปริมาณการเข้าชมแบ่งตามรายเดือน (YoY)</p>
                     </div>
                     <div class="flex-grow relative min-h-[250px]">
                         <canvas id="visitorChart"></canvas>
                     </div>
                 </div>
                 <!-- AI Prediction Card -->
-                <div class="lg:col-span-1 glass-panel p-6 rounded-xl flex flex-col justify-center border-t-4 border-brand-teal relative overflow-hidden">
+                <div class="lg:col-span-1 glass-panel p-6 rounded-2xl flex flex-col justify-center border-t-4 border-brand-yellow relative overflow-hidden bg-gradient-to-br from-[rgba(15,23,42,0.6)] to-[rgba(249,115,22,0.15)]">
                     <div class="absolute top-0 right-0 p-4 opacity-10">
-                        <svg class="w-16 h-16 text-brand-teal" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
+                        <svg class="w-16 h-16 text-brand-yellow" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
                     </div>
                     <div class="mb-4 relative z-10">
-                        <h3 class="text-base font-bold flex items-center gap-2 text-brand-teal">
-                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path></svg>
+                        <h3 class="text-base font-bold flex items-center gap-2 text-brand-yellow drop-shadow-md">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path></svg>
                             Trend Prediction
                         </h3>
                         <p class="text-xs text-brand-muted mt-1">พยากรณ์ข้อมูลปีถัดไป (Linear Regression)</p>
                     </div>
-                    <div id="aiPredictionResult" class="bg-brand-bg/50 p-5 rounded-lg border border-brand-border text-center flex-grow flex flex-col justify-center relative z-10">
+                    <div id="aiPredictionResult" class="bg-brand-surface p-5 rounded-xl border border-brand-border text-center flex-grow flex flex-col justify-center relative z-10 shadow-inner">
                         <!-- JS Injected -->
                     </div>
                 </div>
@@ -345,22 +316,23 @@
             <!-- LOCATION ANALYSIS & MAP -->
             <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
                 <!-- Map -->
-                <div class="lg:col-span-2 glass-panel p-6 rounded-xl flex flex-col">
+                <div class="lg:col-span-2 glass-panel p-6 rounded-2xl flex flex-col">
                     <div class="flex flex-col sm:flex-row justify-between items-start sm:items-end mb-4 gap-3">
                         <div>
                             <h3 class="text-base font-bold text-brand-text">การกระจายตัวเชิงพื้นที่ (Location Analysis)</h3>
                             <p class="text-xs text-brand-muted">แผนที่แสดงจุดศูนย์กลางรายได้และปริมาณนักท่องเที่ยวริมฝั่งโขง</p>
                         </div>
-                        <div class="text-xs font-medium text-brand-text bg-brand-surface-light px-3 py-1.5 rounded border border-brand-border" id="mapSummary">
+                        <div class="text-xs font-medium text-brand-text bg-brand-surface px-4 py-2 rounded-lg border border-brand-border shadow-sm" id="mapSummary">
                             <!-- Injected via JS -->
                         </div>
                     </div>
-                    <div id="tourismMap" class="w-full h-[350px] rounded-lg border border-brand-border z-0 relative flex-grow">
+                    <div id="tourismMap" class="w-full h-[350px] rounded-xl border border-brand-border z-0 relative flex-grow">
+                        <!-- Dark theme map -->
                     </div>
                 </div>
                 
                 <!-- Revenue Chart -->
-                <div class="glass-panel p-6 rounded-xl flex flex-col">
+                <div class="glass-panel p-6 rounded-2xl flex flex-col">
                     <div class="mb-4">
                         <h3 class="text-base font-bold text-brand-text">รายได้จำแนกตามสถานที่</h3>
                         <p class="text-xs text-brand-muted">เรียงลำดับแหล่งรายได้หลัก</p>
@@ -374,28 +346,22 @@
             <!-- DATA INSIGHT & RECOMMENDATION -->
             <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <!-- Insight -->
-                <div class="glass-panel border-l-4 border-brand-gold p-6 rounded-xl relative overflow-hidden">
-                    <div class="absolute right-0 bottom-0 opacity-5 w-32 h-32 transform translate-x-8 translate-y-8">
-                        <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2L2 22h20L12 2z"/></svg>
-                    </div>
+                <div class="glass-panel border-l-4 border-brand-yellow p-6 rounded-2xl relative overflow-hidden">
                     <div class="flex items-center gap-2 mb-4 relative z-10">
-                        <svg class="w-5 h-5 text-brand-gold" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                        <svg class="w-5 h-5 text-brand-yellow" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
                         <h3 class="font-bold text-brand-text text-sm">ข้อมูลเชิงลึก (Deep Data Insight)</h3>
                     </div>
                     <p id="dashboardInsightText" class="text-sm text-brand-muted leading-relaxed relative z-10"></p>
                 </div>
                 <!-- Recommendation -->
-                <div class="glass-panel border-l-4 border-brand-aqua p-6 rounded-xl relative overflow-hidden">
-                    <div class="absolute right-0 bottom-0 opacity-5 w-32 h-32 transform translate-x-8 translate-y-8">
-                        <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2L2 22h20L12 2zm0 3.8l7.2 14.4H4.8L12 5.8z"/></svg>
-                    </div>
+                <div class="glass-panel border-l-4 border-brand-orange p-6 rounded-2xl relative overflow-hidden">
                     <div class="flex items-center gap-2 mb-4 relative z-10">
-                        <svg class="w-5 h-5 text-brand-aqua" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
-                        <h3 class="font-bold text-brand-text text-sm">ข้อเสนอแนะเพื่อการตัดสินใจ (Decision Recommendation)</h3>
+                        <svg class="w-5 h-5 text-brand-orange" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                        <h3 class="font-bold text-brand-text text-sm">ข้อเสนอแนะ (Decision Recommendation)</h3>
                     </div>
                     <p id="dashboardRecText" class="text-sm text-brand-muted leading-relaxed relative z-10"></p>
                     <div class="mt-4 text-right relative z-10">
-                        <button onclick="switchTab('datamining')" class="text-xs font-medium text-brand-aqua hover:text-white transition-colors">ดูการวิเคราะห์เชิงลึก &rarr;</button>
+                        <button onclick="switchTab('datamining')" class="text-xs font-medium text-brand-yellow hover:text-white transition-colors">ดูการวิเคราะห์เชิงลึก &rarr;</button>
                     </div>
                 </div>
             </div>
@@ -406,10 +372,10 @@
         <!-- VIEW: ATTRACTIONS -->
         <!-- ========================================== -->
         <div id="view-attractions" class="hidden space-y-6">
-            <div class="glass-panel p-6 rounded-xl">
+            <div class="glass-panel p-6 rounded-2xl">
                 <div class="mb-6 border-b border-brand-border pb-4">
                     <h2 class="text-xl font-bold text-brand-text flex items-center gap-2">
-                        <svg class="w-5 h-5 text-brand-aqua" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                        <svg class="w-5 h-5 text-brand-orange" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
                         สถานที่ท่องเที่ยวริมฝั่งโขง (Attractions Data)
                     </h2>
                     <p class="text-brand-muted text-sm mt-1 ml-7">ข้อมูลสถานะปัจจุบันของแต่ละสถานที่ คำนวณจากชุดข้อมูลภายใต้เงื่อนไขตัวกรอง</p>
@@ -423,15 +389,12 @@
         <!-- ========================================== -->
         <div id="view-datamining" class="hidden space-y-6">
             
-            <div class="glass-panel p-6 rounded-xl relative overflow-hidden">
-                <!-- Decorative scales background -->
-                <div class="absolute inset-0 opacity-[0.03] pointer-events-none" style="background-image: radial-gradient(#D6B25E 2px, transparent 2px); background-size: 20px 20px;"></div>
-                
-                <h2 class="text-xl font-bold text-brand-text mb-1 relative z-10">การวิเคราะห์ข้อมูลและการแบ่งกลุ่มนักท่องเที่ยว (Tourist Segmentation)</h2>
+            <div class="glass-panel p-6 rounded-2xl relative overflow-hidden">
+                <h2 class="text-xl font-bold text-brand-text mb-1 relative z-10">การวิเคราะห์กลุ่มนักท่องเที่ยว (Tourist Segmentation)</h2>
                 <p class="text-sm text-brand-muted mb-4 border-b border-brand-border pb-4 relative z-10">เจาะลึกพฤติกรรมนักท่องเที่ยวเพื่อกำหนดกลยุทธ์ที่เหมาะสม</p>
                 
-                <div class="bg-brand-surface-light border border-brand-border p-4 rounded-lg text-sm flex items-start gap-3 relative z-10">
-                    <svg class="w-5 h-5 text-brand-teal flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z"></path></svg>
+                <div class="bg-brand-surface border border-brand-border p-4 rounded-xl text-sm flex items-start gap-3 relative z-10">
+                    <svg class="w-5 h-5 text-brand-purple flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z"></path></svg>
                     <div>
                         <p class="font-semibold text-brand-text">วิธีการวิเคราะห์: K-Means Clustering</p>
                         <p class="text-brand-muted mt-1"><strong>ตัวแปรที่ใช้ประเมิน (Features):</strong> รายได้เฉลี่ยต่อคน (ARPU) และ ความพึงพอใจ (Satisfaction)</p>
@@ -445,8 +408,8 @@
             <!-- Cluster Statistics -->
             <div>
                 <h3 class="text-base font-bold text-brand-text mb-3 px-2 flex items-center gap-2">
-                    <svg class="w-4 h-4 text-brand-gold" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 7v10c0 2.21 3.582 4 8 4s8-1.79 8-4V7M4 7c0 2.21 3.582 4 8 4s8-1.79 8-4M4 7c0-2.21 3.582-4 8-4s8 1.79 8 4m0 5c0 2.21-3.582 4-8 4s-8-1.79-8-4"></path></svg>
-                    ผลการวิเคราะห์กลุ่มเป้าหมาย (Deep Water Data Layers)
+                    <svg class="w-4 h-4 text-brand-orange" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 7v10c0 2.21 3.582 4 8 4s8-1.79 8-4V7M4 7c0 2.21 3.582 4 8 4s8-1.79 8-4M4 7c0-2.21 3.582-4 8-4s8 1.79 8 4m0 5c0 2.21-3.582 4-8 4s-8-1.79-8-4"></path></svg>
+                    ผลการวิเคราะห์กลุ่มเป้าหมาย (Cluster Layers)
                 </h3>
                 <div class="grid grid-cols-1 lg:grid-cols-3 gap-6" id="dssClusterCards">
                     <!-- Injected via JS -->
@@ -455,16 +418,16 @@
 
             <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
                 <!-- Visualization -->
-                <div class="glass-panel p-6 rounded-xl flex flex-col border border-brand-border">
+                <div class="glass-panel p-6 rounded-2xl flex flex-col border border-brand-border">
                     <h3 class="text-base font-bold text-brand-text mb-1">การกระจายตัวของข้อมูล (Scatter Plot)</h3>
-                    <p class="text-xs text-brand-muted mb-4">แสดงความสัมพันธ์ระหว่าง "รายได้เฉลี่ยต่อคน" และ "ความพึงพอใจ"</p>
+                    <p class="text-xs text-brand-muted mb-4">แสดงความสัมพันธ์ระหว่าง "รายได้เฉลี่ย" และ "ความพึงพอใจ"</p>
                     <div class="flex-grow w-full relative min-h-[350px]">
                         <canvas id="dssScatterChart"></canvas>
                     </div>
                 </div>
 
                 <!-- Rule-based Recommendation -->
-                <div class="glass-panel p-6 rounded-xl flex flex-col border border-brand-border">
+                <div class="glass-panel p-6 rounded-2xl flex flex-col border border-brand-border">
                     <h3 class="text-base font-bold text-brand-text mb-1">ข้อเสนอแนะเพื่อการตัดสินใจ (Decision Recommendations)</h3>
                     <p class="text-xs text-brand-muted mb-4 border-b border-brand-border pb-2">ระบบประมวลผลกลยุทธ์อัตโนมัติอ้างอิงตามค่าสถิติปัจจุบัน</p>
                     <div id="dssRecommendations" class="space-y-3 overflow-y-auto pr-2 flex-grow">
@@ -478,41 +441,41 @@
     </div>
 
     <!-- Modal: Detail View -->
-    <div id="attractionModal" class="hidden fixed inset-0 bg-[#061A2B]/80 z-[100] flex items-center justify-center p-4 backdrop-blur-md">
-        <div class="bg-brand-surface border border-brand-border rounded-xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+    <div id="attractionModal" class="hidden fixed inset-0 bg-[#0F172A]/90 z-[100] flex items-center justify-center p-4 backdrop-blur-md">
+        <div class="bg-brand-surface border border-brand-border rounded-2xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
             <div class="relative bg-brand-surface-light border-b border-brand-border">
-                <img id="modalImg" src="" class="w-full h-56 md:h-64 object-cover opacity-80" alt="" style="display: none;">
-                <div id="modalFallbackText" class="w-full h-56 md:h-64 flex items-center justify-center text-2xl font-bold text-brand-aqua bg-brand-bg text-center p-6" style="display: none;"></div>
-                <button onclick="closeAttractionDetail()" class="absolute top-4 right-4 bg-brand-surface hover:bg-brand-surface-light text-brand-text rounded-full w-8 h-8 flex items-center justify-center font-bold shadow border border-brand-border transition-colors">&times;</button>
+                <img id="modalImg" src="" class="w-full h-56 md:h-64 object-cover opacity-90" alt="" style="display: none;">
+                <div id="modalFallbackText" class="w-full h-56 md:h-64 flex items-center justify-center text-2xl font-bold text-brand-orange bg-brand-surface text-center p-6" style="display: none;"></div>
+                <button onclick="closeAttractionDetail()" class="absolute top-4 right-4 bg-brand-surface hover:bg-brand-orange hover:text-white text-brand-text rounded-full w-8 h-8 flex items-center justify-center font-bold shadow border border-brand-border transition-colors">&times;</button>
             </div>
             <div class="p-6 md:p-8">
-                <h2 id="modalTitle" class="text-xl font-bold text-brand-gold mb-4"></h2>
+                <h2 id="modalTitle" class="text-xl font-bold text-brand-yellow mb-4 drop-shadow"></h2>
                 
-                <div class="grid grid-cols-3 gap-px bg-brand-border mb-6 border border-brand-border rounded-lg overflow-hidden text-sm">
+                <div class="grid grid-cols-3 gap-px bg-brand-border mb-6 border border-brand-border rounded-xl overflow-hidden text-sm">
                     <div class="bg-brand-surface-light p-3 text-center">
-                        <span class="block text-xs text-brand-muted mb-1">จำนวนผู้เข้าชม</span>
-                        <span id="modalVisitors" class="font-bold text-brand-aqua"></span>
+                        <span class="block text-xs text-brand-muted mb-1">ผู้เข้าชม</span>
+                        <span id="modalVisitors" class="font-bold text-brand-blue"></span>
                     </div>
                     <div class="bg-brand-surface-light p-3 text-center">
-                        <span class="block text-xs text-brand-muted mb-1">รายได้รวม</span>
+                        <span class="block text-xs text-brand-muted mb-1">รายได้</span>
                         <span id="modalRevenue" class="font-bold text-brand-gold"></span>
                     </div>
                     <div class="bg-brand-surface-light p-3 text-center">
-                        <span class="block text-xs text-brand-muted mb-1">ความพึงพอใจ</span>
+                        <span class="block text-xs text-brand-muted mb-1">พอใจ</span>
                         <span id="modalSatisfaction" class="font-bold text-brand-success"></span>
                     </div>
                 </div>
 
-                <div class="space-y-2 text-sm text-brand-text bg-brand-bg/50 p-4 rounded-lg border border-brand-border mb-6">
-                    <p class="flex justify-between"><span class="text-brand-muted">เขตพื้นที่:</span> <span id="modalDistrict" class="font-medium text-brand-aqua"></span></p>
-                    <p class="flex justify-between"><span class="text-brand-muted">ประเภท:</span> <span id="modalType" class="font-medium"></span></p>
+                <div class="space-y-2 text-sm text-brand-text bg-brand-surface p-4 rounded-xl border border-brand-border mb-6">
+                    <p class="flex justify-between"><span class="text-brand-muted">เขตพื้นที่:</span> <span id="modalDistrict" class="font-medium text-brand-orange"></span></p>
+                    <p class="flex justify-between"><span class="text-brand-muted">ประเภท:</span> <span id="modalType" class="font-medium text-brand-purple"></span></p>
                 </div>
                 
                 <div class="flex flex-col md:flex-row justify-between items-center gap-4 mt-6 pt-4 border-t border-brand-border">
                     <span class="text-xs text-brand-muted">แหล่งข้อมูลภาพ: <span id="modalSource" class="font-medium opacity-80"></span></span>
-                    <button id="modalMapBtn" class="w-full md:w-auto bg-brand-surface-light border border-brand-border hover:bg-brand-primary text-white px-5 py-2 rounded-lg text-sm font-medium transition-colors flex items-center justify-center gap-2">
-                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
-                        ดูบนแผนที่
+                    <button id="modalMapBtn" class="w-full md:w-auto bg-brand-orange hover:bg-brand-gold text-white px-5 py-2 rounded-xl text-sm font-medium transition-colors flex items-center justify-center gap-2 shadow-lg">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path></svg>
+                        ระบุพิกัดแผนที่
                     </button>
                 </div>
             </div>
