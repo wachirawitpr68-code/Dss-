@@ -2,12 +2,13 @@ let rawData = [];
 let revenueChartInstance = null;
 let clusterChartInstance = null;
 let visitorChartInstance = null;
+let dssScatterChartInstance = null; // New chart for Phase 3
 
 // Map Variables
 let tourismMap = null;
 let mapMarkersGroup = null;
 
-// Location Meta Data (Virtual Dimension Table for Map & Attractions)
+// Location Meta Data
 const locationDictionary = {
     "ลานพญาศรีสัตตนาคราช": {
         lat: 17.3995, lng: 104.7937,
@@ -35,7 +36,6 @@ const locationDictionary = {
     }
 };
 
-// Global object to store marker references for Deep Linking
 window.mapMarkers = {}; 
 
 // ==========================================
@@ -109,24 +109,208 @@ function updateDashboard() {
         return passFestival && passStyle && passScore;
     });
 
+    // Phase 1 updates
     updateKPIs(filteredData);
     drawVisitorChart(filteredData);
     drawRevenueChart(filteredData);
-    drawClusterChart(filteredData);
+    drawClusterChart(filteredData); // Dashboard small cluster
     renderReviews(filteredData);
     updateMap(filteredData);
     
-    // NEW: Render Attractions Cards using the exact same filtered data
+    // Phase 2 updates
     renderAttractions(filteredData);
+
+    // Phase 3 updates
+    renderDataMining(filteredData);
 }
 
 // ==========================================
-// MAP UPDATE LOGIC 
+// PHASE 3: DATA MINING & DSS LOGIC
 // ==========================================
+function renderDataMining(data) {
+    const containerCards = document.getElementById('dssClusterCards');
+    const containerInsights = document.getElementById('dssInsights');
+    const containerRecs = document.getElementById('dssRecommendations');
+
+    if (data.length === 0) {
+        containerCards.innerHTML = '<div class="col-span-3 text-red-500 bg-red-50 p-4 rounded text-center">ไม่พบข้อมูลตามเงื่อนไข Filter ปัจจุบัน กรุณาปรับเปลี่ยน Filter</div>';
+        containerInsights.innerHTML = '<p class="text-gray-400">N/A</p>';
+        containerRecs.innerHTML = '';
+        if (dssScatterChartInstance) dssScatterChartInstance.destroy();
+        return;
+    }
+
+    // 1. Calculate Aggregates
+    const clusterStats = {};
+    let totalVis = 0;
+
+    data.forEach(row => {
+        if (!clusterStats[row.cluster]) {
+            clusterStats[row.cluster] = { visitors: 0, revenue: 0, sumSat: 0, count: 0, styles: {} };
+        }
+        clusterStats[row.cluster].visitors += row.visitors;
+        clusterStats[row.cluster].revenue += row.revenue;
+        clusterStats[row.cluster].sumSat += row.satisfaction;
+        clusterStats[row.cluster].count += 1;
+        
+        // Track variable for characteristics
+        clusterStats[row.cluster].styles[row.travelStyle] = (clusterStats[row.cluster].styles[row.travelStyle] || 0) + row.visitors;
+        totalVis += row.visitors;
+    });
+
+    let maxArpu = -1; let maxArpuCluster = "";
+    let minSat = 6; let minSatCluster = "";
+    let maxVol = -1; let maxVolCluster = "";
+    let maxVolPct = 0;
+
+    // Process variables
+    Object.keys(clusterStats).forEach(c => {
+        const stat = clusterStats[c];
+        stat.arpu = stat.visitors > 0 ? (stat.revenue / stat.visitors) : 0;
+        stat.avgSat = stat.count > 0 ? (stat.sumSat / stat.count) : 0;
+        stat.pct = totalVis > 0 ? (stat.visitors / totalVis) * 100 : 0;
+
+        if (stat.arpu > maxArpu) { maxArpu = stat.arpu; maxArpuCluster = c; }
+        if (stat.avgSat < minSat) { minSat = stat.avgSat; minSatCluster = c; }
+        if (stat.visitors > maxVol) { maxVol = stat.visitors; maxVolCluster = c; maxVolPct = stat.pct; }
+    });
+
+    // 2. Render Cluster Cards
+    const clusterColors = {
+        "Family Chill-Out": { bg: "bg-green-50", border: "border-green-500", text: "text-green-800" },
+        "Solo Explorer": { bg: "bg-yellow-50", border: "border-yellow-500", text: "text-yellow-800" },
+        "Festival Spenders": { bg: "bg-red-50", border: "border-red-500", text: "text-red-800" }
+    };
+
+    containerCards.innerHTML = '';
+    Object.keys(clusterStats).forEach(c => {
+        const stat = clusterStats[c];
+        const theme = clusterColors[c] || { bg: "bg-gray-50", border: "border-gray-500", text: "text-gray-800" };
+        
+        // Determine dominant style characteristic
+        let dominantStyle = "-";
+        let maxStyleVis = -1;
+        for(let style in stat.styles) {
+            if(stat.styles[style] > maxStyleVis) { maxStyleVis = stat.styles[style]; dominantStyle = style; }
+        }
+
+        containerCards.innerHTML += `
+            <div class="${theme.bg} p-5 rounded-xl border-l-4 ${theme.border} shadow-sm relative overflow-hidden">
+                <h4 class="font-bold text-lg ${theme.text} mb-2">${c}</h4>
+                <div class="grid grid-cols-2 gap-y-3 text-sm text-gray-700">
+                    <div><span class="block text-xs text-gray-500">จำนวนนักท่องเที่ยว</span><span class="font-bold">${stat.visitors.toLocaleString()} คน</span> (${stat.pct.toFixed(1)}%)</div>
+                    <div><span class="block text-xs text-gray-500">รายได้เฉลี่ยต่อหัว (ARPU)</span><span class="font-bold">${Math.round(stat.arpu).toLocaleString()} ฿</span></div>
+                    <div><span class="block text-xs text-gray-500">ความพึงพอใจ</span><span class="font-bold">⭐ ${stat.avgSat.toFixed(2)}</span></div>
+                    <div><span class="block text-xs text-gray-500">สไตล์เด่น</span><span class="font-bold bg-white px-2 py-0.5 rounded border border-gray-200 text-xs">${dominantStyle}</span></div>
+                </div>
+            </div>
+        `;
+    });
+
+    // 3. Render Insights (Automatically deduced from true data)
+    containerInsights.innerHTML = `
+        <ul class="list-disc pl-5 space-y-3 text-gray-700">
+            <li><strong>การสร้างรายได้ (Revenue):</strong> กลุ่ม <span class="text-blue-700 font-bold bg-blue-100 px-1 rounded">${maxArpuCluster}</span> เป็นกลุ่มที่มีอัตราการจ่ายต่อหัวเฉลี่ย (ARPU) สูงที่สุดที่ ${Math.round(maxArpu).toLocaleString()} บาท/คน ถือเป็นกลุ่มเป้าหมายมูลค่าสูง</li>
+            <li><strong>ปริมาณฐานลูกค้า (Volume):</strong> ฐานลูกค้าใหญ่ที่สุดในเงื่อนไขปัจจุบันคือกลุ่ม <span class="text-blue-700 font-bold bg-blue-100 px-1 rounded">${maxVolCluster}</span> ซึ่งกินสัดส่วนถึง ${maxVolPct.toFixed(1)}% ของนักท่องเที่ยวทั้งหมด</li>
+            <li><strong>จุดที่ควรระวัง (Satisfaction):</strong> กลุ่ม <span class="text-red-600 font-bold bg-red-50 px-1 rounded">${minSatCluster}</span> รายงานระดับความพึงพอใจต่ำที่สุดในบรรดาทุกกลุ่ม (เฉลี่ย ${minSat.toFixed(2)} ดาว) ควรเร่งหาสาเหตุและปรับปรุง</li>
+        </ul>
+    `;
+
+    // 4. Render DSS Recommendations
+    containerRecs.innerHTML = `
+        <div class="bg-blue-50 p-4 rounded-lg border border-blue-200 hover:shadow-md transition">
+            <h4 class="font-bold text-blue-900 mb-2 border-b border-blue-200 pb-1">🎯 การตลาด (Marketing)</h4>
+            <p class="text-gray-700 text-xs">มุ่งจัดทำแพ็กเกจท่องเที่ยวแบบพรีเมียม เจาะกลุ่ม <b>${maxArpuCluster}</b> โดยเฉพาะ เพื่อดึงดูดเม็ดเงินเข้าชุมชนให้มากขึ้น</p>
+        </div>
+        <div class="bg-green-50 p-4 rounded-lg border border-green-200 hover:shadow-md transition">
+            <h4 class="font-bold text-green-900 mb-2 border-b border-green-200 pb-1">📢 การโปรโมท (Promotion)</h4>
+            <p class="text-gray-700 text-xs">ใช้เนื้อหาที่โดนใจกลุ่ม <b>${maxVolCluster}</b> เพื่อสร้าง Viral ทางโซเชียล เนื่องจากเป็นฐานนักท่องเที่ยวที่ใหญ่ที่สุด</p>
+        </div>
+        <div class="bg-red-50 p-4 rounded-lg border border-red-200 hover:shadow-md transition">
+            <h4 class="font-bold text-red-900 mb-2 border-b border-red-200 pb-1">🛠️ บริหารจัดการ (Management)</h4>
+            <p class="text-gray-700 text-xs">สำรวจและแก้ไขปัญหาด้านสิ่งอำนวยความสะดวก เพื่อยกระดับความพึงพอใจของกลุ่ม <b>${minSatCluster}</b> อย่างเร่งด่วน</p>
+        </div>
+        <div class="bg-purple-50 p-4 rounded-lg border border-purple-200 hover:shadow-md transition">
+            <h4 class="font-bold text-purple-900 mb-2 border-b border-purple-200 pb-1">📊 ผลจากฟิลเตอร์ (DSS Logic)</h4>
+            <p class="text-gray-700 text-xs">ระบบดึงข้อมูลแบบ Real-time ตามเงื่อนไขที่คุณเลือก หากคุณเปลี่ยนกลุ่มเป้าหมายที่แท็บด้านบน กลยุทธ์จะคำนวณปรับเปลี่ยนให้ทันที</p>
+        </div>
+    `;
+
+    // 5. Draw Deep Dive Scatter Chart (ARPU vs Satisfaction)
+    drawDssScatterChart(data);
+}
+
+function drawDssScatterChart(data) {
+    const ctx = document.getElementById('dssScatterChart').getContext('2d');
+    const clusterColors = {
+        "Family Chill-Out": "rgba(34, 197, 94, 0.8)",
+        "Solo Explorer": "rgba(234, 179, 8, 0.8)",
+        "Festival Spenders": "rgba(239, 68, 68, 0.8)"
+    };
+
+    const datasets = [];
+    const clusters = [...new Set(data.map(d => d.cluster))];
+
+    clusters.forEach(clusterName => {
+        // Here we map data to points: x = Satisfaction, y = ARPU
+        const clusterPoints = data.filter(d => d.cluster === clusterName).map(d => {
+            let arpu = d.visitors > 0 ? (d.revenue / d.visitors) : 0;
+            return {
+                x: d.satisfaction,
+                y: arpu,
+                location: d.location,
+                visitors: d.visitors
+            };
+        });
+
+        datasets.push({
+            label: clusterName,
+            data: clusterPoints,
+            backgroundColor: clusterColors[clusterName] || 'rgba(156, 163, 175, 0.8)',
+            pointRadius: (ctx) => {
+                // Size points by visitor volume relative to others
+                let v = ctx.raw ? ctx.raw.visitors : 10;
+                return Math.max(5, Math.min(25, v / 15)); // scale logic
+            },
+            pointHoverRadius: 12
+        });
+    });
+
+    if (dssScatterChartInstance) dssScatterChartInstance.destroy();
+
+    dssScatterChartInstance = new Chart(ctx, {
+        type: 'scatter',
+        data: { datasets: datasets },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: {
+                x: { title: { display: true, text: 'คะแนนความพึงพอใจ (1-5 ดาว)' }, min: 1, max: 5 },
+                y: { title: { display: true, text: 'รายได้เฉลี่ยต่อหัว ARPU (บาท)' }, beginAtZero: true }
+            },
+            plugins: {
+                tooltip: {
+                    callbacks: {
+                        label: (ctx) => {
+                            const p = ctx.raw;
+                            return `[${p.location}] พอใจ: ${p.x}⭐ | ARPU: ${Math.round(p.y)}฿ | จำนวนคน: ${p.visitors}`;
+                        }
+                    }
+                }
+            }
+        }
+    });
+}
+
+
+// ==========================================
+// PHASE 2 & 1 REMAINDER CODE (UNTOUCHED)
+// ==========================================
+
 function updateMap(data) {
     if (!mapMarkersGroup) return;
     mapMarkersGroup.clearLayers();
-    window.mapMarkers = {}; // Reset marker references
+    window.mapMarkers = {}; 
 
     const locationStats = {};
     let totalMapVisitors = 0;
@@ -164,7 +348,7 @@ function updateMap(data) {
         if (meta) {
             const visitorCount = locationStats[locName];
             const marker = L.marker([meta.lat, meta.lng]);
-            window.mapMarkers[locName] = marker; // Store for Deep Linking
+            window.mapMarkers[locName] = marker;
             
             const popupContent = `
                 <div style="width: 240px; font-family: 'Prompt', sans-serif;">
@@ -191,12 +375,7 @@ function updateMap(data) {
     });
 }
 
-// ==========================================
-// PHASE 2: ATTRACTIONS & MODAL LOGIC
-// ==========================================
-
 function renderAttractions(filteredData) {
-    // 1. Aggregate visitors to ensure Cards match Filter State
     const locationStats = {};
     filteredData.forEach(row => {
         if (!locationStats[row.location]) locationStats[row.location] = 0;
@@ -206,11 +385,8 @@ function renderAttractions(filteredData) {
     const grid = document.getElementById('attractionsGrid');
     grid.innerHTML = '';
 
-    // 2. Loop through our master location dictionary to build cards
     Object.keys(locationDictionary).forEach(locName => {
         const meta = locationDictionary[locName];
-        // If 0 visitors after filter, we can still show the card with "0", or hide it. 
-        // Showing it with 0 is usually better for a DSS to see what's excluded.
         const visitorCount = locationStats[locName] || 0;
 
         const card = document.createElement('div');
@@ -249,8 +425,6 @@ function openAttractionDetail(locName) {
     const meta = locationDictionary[locName];
     if (!meta) return;
 
-    // To ensure modal shows real-time filtered stats, recalculate just to be safe
-    // using the DOM filter states.
     const festivalFilter = document.getElementById('filterFestival').value;
     const styleFilter = document.getElementById('filterStyle').value;
     const scoreFilter = document.getElementById('filterScore').value;
@@ -269,7 +443,6 @@ function openAttractionDetail(locName) {
         }
     });
 
-    // Populate Modal
     document.getElementById('modalImg').src = meta.img;
     document.getElementById('modalTitle').innerText = locName;
     document.getElementById('modalDistrict').innerText = meta.district;
@@ -277,11 +450,8 @@ function openAttractionDetail(locName) {
     document.getElementById('modalCoords').innerText = `${meta.lat}, ${meta.lng}`;
     document.getElementById('modalVisitors').innerText = `${visitorCount.toLocaleString()} คน`;
     document.getElementById('modalSource').innerText = meta.source;
-    
-    // Wire up the map button inside the modal
     document.getElementById('modalMapBtn').onclick = () => focusOnMap(locName);
 
-    // Show modal
     document.getElementById('attractionModal').classList.remove('hidden');
 }
 
@@ -290,27 +460,16 @@ function closeAttractionDetail() {
 }
 
 function focusOnMap(locName) {
-    // 1. Close Modal if it's open
     closeAttractionDetail();
-    // 2. Switch to Dashboard tab
     switchTab('dashboard');
-    
-    // 3. Pan map and open popup (with a slight delay to allow DOM render)
     setTimeout(() => {
         const meta = locationDictionary[locName];
         if (meta && window.mapMarkers && window.mapMarkers[locName]) {
-            // Smoothly pan and zoom to the location
             tourismMap.flyTo([meta.lat, meta.lng], 14, { duration: 1.5 });
-            // Open the Leaflet Popup
             window.mapMarkers[locName].openPopup();
         }
     }, 300);
 }
-
-
-// ==========================================
-// EXISTING CHART & KPI LOGIC
-// ==========================================
 
 function updateKPIs(data) {
     if (data.length === 0) {

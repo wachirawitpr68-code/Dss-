@@ -42,7 +42,6 @@
                     <h1 class="text-2xl font-bold text-blue-900">Nakhon Phanom Tourism Dashboard</h1>
                     <p class="text-gray-500 text-sm">ระบบสนับสนุนการตัดสินใจ (DSS) วิเคราะห์สถิติและรายได้ชุมชน</p>
                 </div>
-                <!-- OLAP Filters -->
                 <div class="flex flex-wrap gap-4">
                     <div>
                         <label class="block text-xs text-gray-500 mb-1">เทศกาล (Slice)</label>
@@ -124,7 +123,7 @@
                 <!-- Clustering -->
                 <div class="bg-white p-6 rounded-xl shadow-sm">
                     <h3 class="text-lg font-bold mb-1 text-gray-700">Data Mining: Customer Segmentation</h3>
-                    <p class="text-xs text-gray-500 mb-4">ค้นหากลุ่มนักท่องเที่ยวที่สร้างรายได้สูงแต่ความพึงพอใจต่ำ</p>
+                    <p class="text-xs text-gray-500 mb-4">ภาพรวมคร่าวๆ ของการกระจายกลุ่มลูกค้า</p>
                     <canvas id="clusterChart" height="200"></canvas>
                 </div>
             </div>
@@ -149,24 +148,58 @@
                         <p class="text-gray-500 text-sm mt-1">ข้อมูลยอดนักท่องเที่ยวถูกเชื่อมโยงและคำนวณจาก Filter หลักแบบ Real-time</p>
                     </div>
                 </div>
-                <!-- Grid Container for Cards -->
-                <div id="attractionsGrid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-                    <!-- Cards injected by JS -->
-                </div>
+                <div id="attractionsGrid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6"></div>
             </div>
         </div>
 
         <!-- ========================================== -->
-        <!-- VIEW: DATA MINING / DSS (Placeholder) -->
+        <!-- VIEW: DATA MINING / DSS (PHASE 3) -->
         <!-- ========================================== -->
-        <div id="view-datamining" class="hidden bg-white p-12 rounded-xl shadow-sm text-center border-2 border-dashed border-gray-200">
-            <h2 class="text-3xl font-bold text-blue-900 mb-3">🧠 Data Mining / DSS Page</h2>
-            <p class="text-gray-500 max-w-lg mx-auto">หน้านี้กำลังพัฒนาใน Phase ต่อไป ระบบ Clustering ถูกแสดงผลรวมอยู่ในหน้า Dashboard หลักแล้วครับ</p>
+        <div id="view-datamining" class="hidden space-y-6">
+            <!-- Header -->
+            <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
+                <h2 class="text-2xl font-bold text-blue-900">🧠 Data Mining & Decision Support System (DSS)</h2>
+                <p class="text-gray-500 text-sm mt-1">วิเคราะห์เชิงลึก (Customer Segmentation) เพื่อสร้างข้อเสนอแนะเชิงกลยุทธ์ อิงจากชุดข้อมูลตามตัวกรองปัจจุบัน</p>
+            </div>
+
+            <!-- 1. Cluster Statistics -->
+            <h3 class="text-lg font-bold text-gray-700 px-1">📊 สถิติกลุ่มลูกค้า (Tourist Segmentation)</h3>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6" id="dssClusterCards">
+                <!-- Injected via JS -->
+            </div>
+
+            <!-- 2. Visualization & Deep Dive -->
+            <div class="grid grid-cols-1 lg:grid-cols-5 gap-6">
+                <!-- Deep Dive Chart -->
+                <div class="lg:col-span-3 bg-white p-6 rounded-xl shadow-sm border border-gray-100 flex flex-col">
+                    <h3 class="text-lg font-bold mb-1 text-gray-700">Cluster Scatter Plot (ARPU vs Satisfaction)</h3>
+                    <p class="text-xs text-gray-500 mb-4">แสดงการกระจายตัวเปรียบเทียบ "รายได้เฉลี่ยต่อหัว" และ "ความพึงพอใจ"</p>
+                    <div class="flex-grow w-full relative h-[300px]">
+                        <canvas id="dssScatterChart"></canvas>
+                    </div>
+                </div>
+                
+                <!-- Insight -->
+                <div class="lg:col-span-2 bg-white p-6 rounded-xl shadow-sm border border-gray-100 flex flex-col">
+                    <h3 class="text-lg font-bold mb-4 text-gray-700">🔍 DSS Insights (วิเคราะห์อัตโนมัติ)</h3>
+                    <div id="dssInsights" class="space-y-4 flex-grow text-sm bg-gray-50 p-4 rounded-lg border border-gray-200">
+                        <!-- Injected via JS -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- 3. Recommendations -->
+            <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
+                <h3 class="text-lg font-bold mb-4 text-gray-700">💡 Decision Recommendations (คำแนะนำเชิงกลยุทธ์ตามข้อมูลจริง)</h3>
+                <div id="dssRecommendations" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 text-sm">
+                    <!-- Injected via JS -->
+                </div>
+            </div>
         </div>
 
     </div>
 
-    <!-- Modal: Detail View (Hidden by default) -->
+    <!-- Modal: Detail View (Phase 2) -->
     <div id="attractionModal" class="hidden fixed inset-0 bg-gray-900/70 z-[100] flex items-center justify-center p-4 backdrop-blur-sm">
         <div class="bg-white rounded-xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto transform transition-all">
             <div class="relative">
