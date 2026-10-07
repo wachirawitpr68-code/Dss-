@@ -93,6 +93,7 @@
         }
 
         /* Map Tweaks for Dark Theme */
+        .map-tiles-dark { filter: brightness(0.7) invert(1) contrast(1.5) hue-rotate(180deg) sepia(30%); }
         .leaflet-container { background: #061A2B; }
         .leaflet-popup-content-wrapper { 
             background: #0D2638; 
@@ -354,8 +355,7 @@
                             <!-- Injected via JS -->
                         </div>
                     </div>
-                    <div id="tourismMap" class="w-full h-[350px] rounded-lg border border-brand-border z-0 relative flex-grow filter sepia-[0.2] hue-rotate-180 brightness-[0.8] contrast-[1.2]">
-                        <!-- Dark theme map achieved via CartoDB tiles + slight CSS filter -->
+                    <div id="tourismMap" class="w-full h-[350px] rounded-lg border border-brand-border z-0 relative flex-grow">
                     </div>
                 </div>
                 

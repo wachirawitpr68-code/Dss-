@@ -146,9 +146,10 @@ async function initDashboard() {
 
 function initMap() {
     tourismMap = L.map('tourismMap').setView([17.25, 104.55], 9);
-    // Dark theme CartoDB base map fits the underwater theme perfectly
-    L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
-        attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> &copy; CartoDB'
+    // Using standard OSM with CSS filter for dark underwater theme
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
+        className: 'map-tiles-dark'
     }).addTo(tourismMap);
     mapMarkersGroup = L.layerGroup().addTo(tourismMap);
 }
