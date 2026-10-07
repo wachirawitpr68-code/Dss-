@@ -7,8 +7,7 @@ let visitorChartInstance = null;
 let tourismMap = null;
 let mapMarkersGroup = null;
 
-// Location Meta Data (Virtual Dimension Table for Map mapping)
-// Image Sources are real Wikimedia Commons images.
+// Location Meta Data (Virtual Dimension Table for Map)
 const locationDictionary = {
     "ลานพญาศรีสัตตนาคราช": {
         lat: 17.3995, lng: 104.7937,
@@ -23,59 +22,87 @@ const locationDictionary = {
         source: "Wikimedia Commons"
     },
     "ถนนคนเดินนครพนม": {
-        lat: 17.4068, lng: 104.7891, // หอนาฬิกาเวียดนามอนุสรณ์ (ศูนย์กลางถนนคนเดิน)
+        lat: 17.4068, lng: 104.7891,
         type: "แหล่งช้อปปิ้ง / ตลาด", district: "เมืองนครพนม",
         img: "https://upload.wikimedia.org/wikipedia/commons/thumb/1/10/Nakhon_Phanom_Clock_Tower.jpg/800px-Nakhon_Phanom_Clock_Tower.jpg",
         source: "Wikimedia Commons"
     },
     "ชุมชนไทญ้อ": {
-        lat: 17.0544, lng: 104.6783, // บริเวณวัดพระธาตุเรณู (ศูนย์กลางวัฒนธรรมเรณูนคร)
+        lat: 17.0544, lng: 104.6783,
         type: "ชุมชนวัฒนธรรม", district: "เรณูนคร",
         img: "https://upload.wikimedia.org/wikipedia/commons/thumb/5/52/Phra_That_Renu_Nakhon.jpg/800px-Phra_That_Renu_Nakhon.jpg",
         source: "Wikimedia Commons"
     }
 };
 
-// Fetch data and initialize
+// ==========================================
+// NAVIGATION LOGIC
+// ==========================================
+function switchTab(tabName) {
+    // Hide all views
+    document.getElementById('view-dashboard').classList.add('hidden');
+    document.getElementById('view-attractions').classList.add('hidden');
+    document.getElementById('view-datamining').classList.add('hidden');
+    
+    // Reset Nav buttons style
+    const navIds = ['nav-dashboard', 'nav-attractions', 'nav-datamining'];
+    navIds.forEach(id => {
+        const btn = document.getElementById(id);
+        btn.classList.remove('border-b-2', 'border-white', 'pb-1');
+        btn.classList.add('text-blue-200');
+    });
+
+    // Show active view and update nav style
+    document.getElementById('view-' + tabName).classList.remove('hidden');
+    
+    const activeBtn = document.getElementById('nav-' + tabName);
+    activeBtn.classList.remove('text-blue-200');
+    activeBtn.classList.add('border-b-2', 'border-white', 'pb-1');
+
+    // Fix map rendering bug when switching tabs back to map
+    if (tabName === 'dashboard' && tourismMap) {
+        setTimeout(() => tourismMap.invalidateSize(), 100);
+    }
+}
+
+// ==========================================
+// INITIALIZATION
+// ==========================================
 async function initDashboard() {
     try {
         const response = await fetch('data.json');
         rawData = await response.json();
         
-        initMap(); // Initialize map once
-        updateDashboard(); // Render all components
+        initMap(); 
+        updateDashboard(); 
     } catch (error) {
         console.error("Error loading data:", error);
         alert("กรุณาเปิดไฟล์ผ่าน Live Server หรือ Web Server เพื่อให้โหลด data.json ได้ครับ");
     }
 }
 
-// Map Initialization
 function initMap() {
-    // กำหนดจุดศูนย์กลางของจังหวัดนครพนม
     tourismMap = L.map('tourismMap').setView([17.15, 104.75], 10);
-    
-    // ใช้ OpenStreetMap
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
         attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
     }).addTo(tourismMap);
-
-    // สร้าง LayerGroup สำหรับจัดการ Marker เพื่อให้ลบและสร้างใหม่ได้ง่ายเมื่อ Filter เปลี่ยน
     mapMarkersGroup = L.layerGroup().addTo(tourismMap);
 }
 
-// Event Listeners for OLAP Filters
+// ==========================================
+// EXISTING FILTERS & CORE LOGIC
+// ==========================================
 document.getElementById('filterFestival').addEventListener('change', updateDashboard);
 document.getElementById('filterStyle').addEventListener('change', updateDashboard);
 document.getElementById('filterScore').addEventListener('change', updateDashboard);
 
 function updateDashboard() {
-    // 1. Get filter values
+    // 1. Get filter values (SINGLE SOURCE OF TRUTH)
     const festivalFilter = document.getElementById('filterFestival').value;
     const styleFilter = document.getElementById('filterStyle').value;
     const scoreFilter = document.getElementById('filterScore').value;
 
-    // 2. Filter data (The Single Source of Truth for all UI components)
+    // 2. Filter data (This affects Charts, KPI, and Map simultaneously)
     let filteredData = rawData.filter(row => {
         let passFestival = festivalFilter === 'all' ? true : row.isFestival.toString() === festivalFilter;
         let passStyle = styleFilter === 'all' ? true : row.travelStyle === styleFilter;
@@ -95,62 +122,74 @@ function updateDashboard() {
     drawClusterChart(filteredData);
     renderReviews(filteredData);
     
-    // 4. Update New Map Component
+    // 4. Update Map based on same filtered data
     updateMap(filteredData);
 }
 
-// Map Update Logic (Task 1 & 2)
+// ==========================================
+// MAP UPDATE LOGIC (PHASE 1 ENHANCED)
+// ==========================================
 function updateMap(data) {
     if (!mapMarkersGroup) return;
-    
-    // Clear old markers for performance
     mapMarkersGroup.clearLayers();
 
-    // Data Aggregation: Aggregate visitors by location based on filtered dataset
+    // Data Aggregation: sum visitors per location
     const locationStats = {};
     let totalMapVisitors = 0;
 
     data.forEach(row => {
-        if (!locationStats[row.location]) {
-            locationStats[row.location] = 0;
-        }
+        if (!locationStats[row.location]) locationStats[row.location] = 0;
         locationStats[row.location] += row.visitors;
         totalMapVisitors += row.visitors;
     });
 
     const activeLocationsCount = Object.keys(locationStats).length;
 
-    // Update Map Summary Header
-    const summaryText = activeLocationsCount > 0 
-        ? `พบ ${activeLocationsCount} สถานที่ | รวม ${totalMapVisitors.toLocaleString()} คน` 
-        : `ไม่พบข้อมูลสถานที่จากเงื่อนไขนี้`;
-    document.getElementById('mapSummary').innerText = summaryText;
+    // Find Top Location
+    let topLocationName = "-";
+    let maxVisitors = -1;
+    for (const [loc, vis] of Object.entries(locationStats)) {
+        if (vis > maxVisitors) {
+            maxVisitors = vis;
+            topLocationName = loc;
+        }
+    }
 
-    // Create Markers
+    // Update Map Summary Header
+    const summaryEl = document.getElementById('mapSummary');
+    if (activeLocationsCount > 0) {
+        summaryEl.innerHTML = `
+            <span class="inline-block mr-3">📍 สถานที่: <span class="text-blue-700">${activeLocationsCount} แห่ง</span></span>
+            <span class="inline-block mr-3">👥 นักท่องเที่ยว: <span class="text-blue-700">${totalMapVisitors.toLocaleString()} คน</span></span>
+            <span class="inline-block">🏆 ยอดนิยม: <span class="text-green-600">${topLocationName}</span></span>
+        `;
+    } else {
+        summaryEl.innerHTML = `<span class="text-red-500">ไม่พบข้อมูลจาก Filter นี้</span>`;
+    }
+
+    // Draw Markers
     Object.keys(locationStats).forEach(locName => {
         const meta = locationDictionary[locName];
         if (meta) {
             const visitorCount = locationStats[locName];
-            
-            // Create Marker
             const marker = L.marker([meta.lat, meta.lng]);
             
-            // Popup HTML Design (with real image)
+            // Popup HTML Design (Strictly following user requirements)
             const popupContent = `
-                <div class="w-48">
-                    <img src="${meta.img}" 
-                         class="w-full h-32 object-cover rounded-t-sm mb-2 shadow-sm" 
-                         alt="${locName}" 
-                         onerror="this.src='https://via.placeholder.com/300x200?text=Image+Not+Found'">
-                    <h4 class="font-bold text-base text-gray-800 leading-tight mb-1">${locName}</h4>
-                    <p class="text-[11px] text-gray-600 mb-2 leading-snug">
-                        <span class="font-semibold">ประเภท:</span> ${meta.type}<br>
-                        <span class="font-semibold">อำเภอ:</span> ${meta.district}
-                    </p>
-                    <div class="bg-blue-50 border border-blue-100 rounded px-2 py-1 mb-1">
-                        <p class="text-sm font-semibold text-blue-700 text-center">นักท่องเที่ยว: ${visitorCount.toLocaleString()} คน</p>
+                <div class="w-48 font-sans">
+                    <h4 class="font-bold text-[15px] text-gray-800 leading-tight mb-1">${locName}</h4>
+                    <div class="text-[12px] text-gray-600 mb-2 leading-snug space-y-0.5">
+                        <p>📍 อำเภอ${meta.district}</p>
+                        <p>🏛️ ${meta.type}</p>
+                        <p class="font-semibold text-blue-700 mt-1 bg-blue-50 px-1 py-0.5 rounded">
+                            👥 นักท่องเที่ยว: ${visitorCount.toLocaleString()} คน
+                        </p>
                     </div>
-                    <p class="text-[9px] text-gray-400 mt-2 text-right">Cr. ${meta.source}</p>
+                    <img src="${meta.img}" class="w-full h-24 object-cover rounded mb-2 border border-gray-200" alt="${locName}">
+                    <button class="w-full bg-blue-600 hover:bg-blue-700 text-white text-[12px] py-1.5 rounded shadow-sm transition-colors" 
+                            onclick="alert('ดูรายละเอียดของ: ${locName} (เตรียมพัฒนาใน Phase ถัดไป)')">
+                        ดูรายละเอียด
+                    </button>
                 </div>
             `;
             
@@ -160,7 +199,9 @@ function updateMap(data) {
     });
 }
 
-// ---------------- EXISTING FUNCTIONS (UNMODIFIED LOGIC) ----------------
+// ==========================================
+// EXISTING CHART & KPI LOGIC (UNTOUCHED)
+// ==========================================
 
 function updateKPIs(data) {
     if (data.length === 0) {
@@ -189,9 +230,7 @@ function drawVisitorChart(data) {
     monthsOrder.forEach(m => visitorsByMonth[m] = 0);
 
     data.forEach(row => {
-        if(visitorsByMonth[row.month] !== undefined) {
-            visitorsByMonth[row.month] += row.visitors;
-        }
+        if(visitorsByMonth[row.month] !== undefined) visitorsByMonth[row.month] += row.visitors;
     });
 
     const labels = monthsOrder;
@@ -215,10 +254,7 @@ function drawVisitorChart(data) {
                 pointRadius: 5
             }]
         },
-        options: {
-            responsive: true,
-            scales: { y: { beginAtZero: true } }
-        }
+        options: { responsive: true, scales: { y: { beginAtZero: true } } }
     });
 }
 
@@ -247,10 +283,7 @@ function drawRevenueChart(data) {
                 borderRadius: 4
             }]
         },
-        options: {
-            responsive: true,
-            scales: { y: { beginAtZero: true } }
-        }
+        options: { responsive: true, scales: { y: { beginAtZero: true } } }
     });
 }
 
@@ -295,10 +328,7 @@ function drawClusterChart(data) {
             plugins: {
                 tooltip: {
                     callbacks: {
-                        label: (ctx) => {
-                            const point = ctx.raw;
-                            return `พอใจ: ${point.x}, รายได้: ${point.y}฿ (${point.location})`;
-                        }
+                        label: (ctx) => `พอใจ: ${ctx.raw.x}, รายได้: ${ctx.raw.y}฿ (${ctx.raw.location})`
                     }
                 }
             }
@@ -309,39 +339,25 @@ function drawClusterChart(data) {
 function renderReviews(data) {
     const container = document.getElementById('reviewContainer');
     container.innerHTML = '';
-    
     const top5 = data.slice(0, 5);
     
     if(top5.length === 0) {
-        container.innerHTML = '<p class="text-sm text-gray-500 italic p-4 bg-gray-50 rounded">ไม่มีข้อมูลรีวิวที่ตรงกับเงื่อนไขที่เลือก</p>';
+        container.innerHTML = '<p class="text-sm text-gray-500 italic p-4 bg-gray-50 rounded">ไม่มีข้อมูลรีวิว</p>';
         return;
     }
 
     top5.forEach(row => {
-        let borderColor = 'border-gray-300';
-        let starColor = 'text-gray-500';
-        
-        if (row.satisfaction >= 4.0) {
-            borderColor = 'border-green-500';
-            starColor = 'text-green-600';
-        } else if (row.satisfaction >= 3.0) {
-            borderColor = 'border-yellow-500';
-            starColor = 'text-yellow-600';
-        } else {
-            borderColor = 'border-red-500';
-            starColor = 'text-red-600';
-        }
+        let borderColor = row.satisfaction >= 4.0 ? 'border-green-500' : (row.satisfaction >= 3.0 ? 'border-yellow-500' : 'border-red-500');
+        let starColor = row.satisfaction >= 4.0 ? 'text-green-600' : (row.satisfaction >= 3.0 ? 'text-yellow-600' : 'text-red-600');
         
         const div = document.createElement('div');
-        div.className = `p-4 bg-gray-50 rounded-lg border-l-4 ${borderColor} flex justify-between items-start gap-4 transition-all hover:bg-gray-100`;
+        div.className = `p-4 bg-gray-50 rounded-lg border-l-4 ${borderColor} flex justify-between items-start gap-4 hover:bg-gray-100`;
         div.innerHTML = `
             <div>
-                <p class="text-sm font-semibold text-gray-800">${row.location} 
-                    <span class="text-xs text-gray-500 font-normal ml-2 bg-gray-200 px-2 py-1 rounded-full">${row.travelStyle} | ${row.month}</span>
-                </p>
+                <p class="text-sm font-semibold text-gray-800">${row.location} <span class="text-xs text-gray-500 font-normal ml-2 bg-gray-200 px-2 py-1 rounded-full">${row.travelStyle} | ${row.month}</span></p>
                 <p class="text-sm text-gray-700 mt-2 italic">"${row.review}"</p>
             </div>
-            <div class="text-right whitespace-nowrap bg-white px-3 py-1 rounded-full shadow-sm border border-gray-100">
+            <div class="text-right whitespace-nowrap bg-white px-3 py-1 rounded-full border border-gray-100">
                 <span class="font-bold ${starColor}">⭐ ${row.satisfaction.toFixed(1)}</span>
             </div>
         `;
@@ -349,5 +365,4 @@ function renderReviews(data) {
     });
 }
 
-// Start app
 initDashboard();
