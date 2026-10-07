@@ -8,6 +8,17 @@ let dssScatterChartInstance = null;
 let tourismMap = null;
 let mapMarkersGroup = null;
 
+// Design System Colors
+const colors = {
+    primary: '#0F4C5C',
+    secondary: '#2A9D8F',
+    accent: '#E9C46A',
+    text: '#1F2937',
+    muted: '#6B7280',
+    border: '#E5E7EB',
+    bg: '#F5F7F9'
+};
+
 // 11 Locations Dictionary
 const locationDictionary = {
     "ลานพญาศรีสัตตนาคราช": {
@@ -80,6 +91,11 @@ const locationDictionary = {
 
 window.mapMarkers = {}; 
 
+// Set Chart.js Defaults for Professional Typography
+Chart.defaults.font.family = "'Prompt', sans-serif";
+Chart.defaults.color = colors.muted;
+Chart.defaults.scale.grid.color = colors.border;
+
 // ==========================================
 // NAVIGATION LOGIC
 // ==========================================
@@ -91,14 +107,14 @@ function switchTab(tabName) {
     const navIds = ['nav-dashboard', 'nav-attractions', 'nav-datamining'];
     navIds.forEach(id => {
         const btn = document.getElementById(id);
-        btn.classList.remove('border-b-2', 'border-white', 'pb-1');
-        btn.classList.add('text-blue-200');
+        btn.classList.remove('border-b-2', 'border-brand-primary', 'text-brand-primary');
+        btn.classList.add('border-transparent', 'text-brand-muted');
     });
 
     document.getElementById('view-' + tabName).classList.remove('hidden');
     const activeBtn = document.getElementById('nav-' + tabName);
-    activeBtn.classList.remove('text-blue-200');
-    activeBtn.classList.add('border-b-2', 'border-white', 'pb-1');
+    activeBtn.classList.remove('border-transparent', 'text-brand-muted');
+    activeBtn.classList.add('border-b-2', 'border-brand-primary', 'text-brand-primary');
 
     if (tabName === 'dashboard' && tourismMap) {
         setTimeout(() => tourismMap.invalidateSize(), 100);
@@ -151,12 +167,13 @@ function updateDashboard() {
         return passFestival && passStyle && passScore;
     });
 
-    const countEl = document.getElementById('recordCount');
-    if (countEl) {
-        countEl.innerText = `แสดงข้อมูล ${filteredData.length} จาก ${rawData.length} รายการ`;
+    const countActiveEl = document.getElementById('recordCountActive');
+    const countTotalEl = document.getElementById('recordCountTotal');
+    if (countActiveEl && countTotalEl) {
+        countActiveEl.innerText = filteredData.length.toLocaleString();
+        countTotalEl.innerText = `จาก ${rawData.length.toLocaleString()} รายการ`;
     }
 
-    // EMPTY STATE HANDLING (MUST FIX 4)
     if (filteredData.length === 0) {
         document.getElementById('globalEmptyState').classList.remove('hidden');
     } else {
@@ -180,9 +197,8 @@ function updateDashboard() {
     updateKPIs(filteredData);
     generateDashboardInsight(filteredData, locationStats);
     drawVisitorChart(filteredData);
-    drawRevenueChart(filteredData); // Using Horizontal Bar now
+    drawRevenueChart(filteredData);
     drawClusterChart(filteredData); 
-    renderReviews(filteredData);
     
     updateMap(locationStats, totalMapVisitors);
     renderAttractions(locationStats);
@@ -195,7 +211,7 @@ function updateDashboard() {
 function generateDashboardInsight(data, locationStats) {
     const insightTextEl = document.getElementById('dashboardInsightText');
     if (data.length === 0) {
-        insightTextEl.innerHTML = '<span class="text-red-500">ไม่พบข้อมูล กรุณาปรับเปลี่ยนตัวกรอง</span>';
+        insightTextEl.innerHTML = '<span class="text-red-500">ไม่สามารถประมวลผลข้อมูลเชิงลึกได้</span>';
         return;
     }
 
@@ -216,7 +232,7 @@ function generateDashboardInsight(data, locationStats) {
         if (arpu > maxArpu) { maxArpu = arpu; topCluster = c; }
     }
 
-    insightTextEl.innerHTML = `จากชุดข้อมูลที่เลือก <b>กลุ่ม ${topCluster}</b> มีรายได้เฉลี่ยต่อคน (ARPU) สูงที่สุด และ <b>${topLoc}</b> มีจำนวนผู้เข้าชมสูงที่สุดจากข้อมูลที่ถูกกรองครับ`;
+    insightTextEl.innerHTML = `จากการวิเคราะห์ข้อมูลตัวกรองปัจจุบัน พบว่า <strong>กลุ่ม ${topCluster}</strong> เป็นกลุ่มเป้าหมายที่มีศักยภาพสูงสุด (รายได้เฉลี่ยต่อคนสูงสุด) และ <strong>${topLoc}</strong> เป็นพื้นที่ที่มีการกระจุกตัวของนักท่องเที่ยวหนาแน่นที่สุด`;
 }
 
 // ==========================================
@@ -237,13 +253,9 @@ function updateMap(locationStats, totalMapVisitors) {
 
     const summaryEl = document.getElementById('mapSummary');
     if (activeLocationsCount > 0) {
-        summaryEl.innerHTML = `
-            <span class="inline-block mr-3">📍 สถานที่: <span class="text-blue-800">${activeLocationsCount} แห่ง</span></span>
-            <span class="inline-block mr-3">👥 นักท่องเที่ยว: <span class="text-blue-800">${totalMapVisitors.toLocaleString()} คน</span></span>
-            <span class="inline-block">🏆 ยอดนิยม: <span class="text-green-700">${topLocationName}</span></span>
-        `;
+        summaryEl.innerHTML = `สถานที่: ${activeLocationsCount} แห่ง | ผู้เข้าชม: ${totalMapVisitors.toLocaleString()} คน`;
     } else {
-        summaryEl.innerHTML = `<span class="text-red-500">ไม่พบข้อมูลจาก Filter นี้</span>`;
+        summaryEl.innerHTML = `<span class="text-red-500">ไม่มีข้อมูล</span>`;
     }
 
     Object.keys(locationStats).forEach(locName => {
@@ -256,41 +268,41 @@ function updateMap(locationStats, totalMapVisitors) {
             window.mapMarkers[locName] = marker;
             
             const imgHtml = meta.img 
-                ? `<img src="${meta.img}" style="width: 100%; height: 140px; object-fit: cover; border-radius: 6px 6px 0 0; margin-bottom: 8px;" alt="${locName}">`
-                : `<div style="width: 100%; height: 140px; background: linear-gradient(135deg, #1e3a8a, #3b82f6); border-radius: 6px 6px 0 0; margin-bottom: 8px; display: flex; align-items: center; justify-content: center; color: white; font-weight: bold; font-size: 14px; text-align: center; padding: 10px; box-sizing: border-box;">${locName}</div>`;
+                ? `<div style="height: 120px; overflow: hidden; border-radius: 4px 4px 0 0; border-bottom: 1px solid #E5E7EB;"><img src="${meta.img}" style="width: 100%; height: 100%; object-fit: cover;" alt="${locName}"></div>`
+                : `<div style="height: 120px; background-color: #F5F7F9; border-radius: 4px 4px 0 0; border-bottom: 1px solid #E5E7EB; display: flex; align-items: center; justify-content: center; color: #0F4C5C; font-weight: 600; font-size: 13px; text-align: center; padding: 10px; box-sizing: border-box;">${locName}</div>`;
 
             const popupContent = `
-                <div style="width: 250px; font-family: 'Prompt', sans-serif;">
+                <div style="width: 240px;">
                     ${imgHtml}
-                    <div style="padding: 0 4px;">
-                        <h4 style="font-weight: bold; font-size: 16px; color: #1e3a8a; margin: 0 0 6px 0; line-height: 1.2;">📍 ${locName}</h4>
-                        <p style="font-size: 13px; color: #4b5563; margin: 0 0 8px 0;">🏛️ ${meta.type}</p>
+                    <div style="padding: 12px;">
+                        <h4 style="font-weight: 700; font-size: 14px; color: #0F4C5C; margin: 0 0 4px 0; line-height: 1.3;">${locName}</h4>
+                        <p style="font-size: 11px; color: #6B7280; margin: 0 0 10px 0;">${meta.type}</p>
                         
-                        <div style="background-color: #f8fafc; font-size: 12px; padding: 6px; border-radius: 4px; margin-bottom: 10px; border: 1px solid #e2e8f0;">
-                            <div style="display: flex; justify-content: space-between; margin-bottom: 4px;">
-                                <span style="color: #475569;">👥 ผู้เข้าชม:</span>
-                                <span style="font-weight: bold; color: #1d4ed8;">${stat.visitors.toLocaleString()} คน</span>
+                        <div style="font-size: 12px; margin-bottom: 12px;">
+                            <div style="display: flex; justify-content: space-between; margin-bottom: 4px; border-bottom: 1px dashed #E5E7EB; padding-bottom: 4px;">
+                                <span style="color: #6B7280;">ผู้เข้าชม</span>
+                                <span style="font-weight: 600; color: #1F2937;">${stat.visitors.toLocaleString()}</span>
                             </div>
-                            <div style="display: flex; justify-content: space-between; margin-bottom: 4px;">
-                                <span style="color: #475569;">💰 รายได้รวม:</span>
-                                <span style="font-weight: bold; color: #15803d;">฿${stat.revenue.toLocaleString()}</span>
+                            <div style="display: flex; justify-content: space-between; margin-bottom: 4px; border-bottom: 1px dashed #E5E7EB; padding-bottom: 4px;">
+                                <span style="color: #6B7280;">รายได้</span>
+                                <span style="font-weight: 600; color: #2A9D8F;">฿${stat.revenue.toLocaleString()}</span>
                             </div>
                             <div style="display: flex; justify-content: space-between;">
-                                <span style="color: #475569;">⭐ ความพอใจ:</span>
-                                <span style="font-weight: bold; color: #b45309;">${avgSat} / 5</span>
+                                <span style="color: #6B7280;">ความพอใจ</span>
+                                <span style="font-weight: 600; color: #E9C46A;">${avgSat}/5</span>
                             </div>
                         </div>
 
-                        <button style="width: 100%; background-color: #2563eb; color: white; border: none; padding: 8px; border-radius: 4px; font-size: 13px; font-weight: bold; cursor: pointer; transition: background-color 0.2s;"
-                                onmouseover="this.style.backgroundColor='#1d4ed8'" onmouseout="this.style.backgroundColor='#2563eb'"
+                        <button style="width: 100%; background-color: white; color: #0F4C5C; border: 1px solid #0F4C5C; padding: 6px; border-radius: 4px; font-size: 12px; font-weight: 600; cursor: pointer; transition: all 0.2s;"
+                                onmouseover="this.style.backgroundColor='#0F4C5C'; this.style.color='white';" onmouseout="this.style.backgroundColor='white'; this.style.color='#0F4C5C';"
                                 onclick="openAttractionDetail('${locName}')">
-                            ดูรายละเอียด
+                            รายละเอียดเพิ่มเติม
                         </button>
                     </div>
                 </div>
             `;
             
-            marker.bindPopup(popupContent, { minWidth: 260, maxWidth: 280 });
+            marker.bindPopup(popupContent, { minWidth: 240, maxWidth: 260, className: 'custom-popup' });
             mapMarkersGroup.addLayer(marker);
         }
     });
@@ -306,48 +318,49 @@ function renderAttractions(locationStats) {
         const avgSat = stat.count > 0 ? (stat.sumSat / stat.count).toFixed(1) : "0.0";
 
         const imgHtml = meta.img
-            ? `<img src="${meta.img}" class="w-full h-full object-cover" alt="${locName}">`
-            : `<div class="w-full h-full bg-gradient-to-br from-blue-800 to-indigo-600 flex items-center justify-center p-4 text-center">
-                 <span class="text-white font-bold text-xl drop-shadow-md">${locName}</span>
+            ? `<img src="${meta.img}" class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" alt="${locName}">`
+            : `<div class="w-full h-full bg-brand-bg flex items-center justify-center p-6 text-center border-b border-brand-border">
+                 <span class="text-brand-primary font-bold text-lg">${locName}</span>
                </div>`;
 
         const card = document.createElement('div');
-        card.className = "bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden hover:shadow-md transition-shadow flex flex-col";
+        card.className = "bg-brand-surface rounded-lg border border-brand-border overflow-hidden flex flex-col group";
         
         card.innerHTML = `
-            <div class="h-44 overflow-hidden relative bg-gray-200">
+            <div class="h-40 overflow-hidden relative bg-brand-bg">
                 ${imgHtml}
-                <div class="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 to-transparent p-4 pt-12">
-                    <h4 class="font-bold text-white text-lg leading-tight truncate" title="${locName}">${locName}</h4>
-                </div>
             </div>
-            <div class="p-4 flex-grow flex flex-col">
-                <div class="text-sm text-gray-600 space-y-1 mb-4 flex-grow border-b border-gray-100 pb-3">
-                    <p>📍 อำเภอ${meta.district}</p>
-                    <p>🏛️ ${meta.type}</p>
+            <div class="p-5 flex-grow flex flex-col">
+                <h4 class="font-bold text-brand-primary text-base leading-tight mb-1 line-clamp-2" title="${locName}">${locName}</h4>
+                <div class="text-xs text-brand-muted space-y-1 mb-4 flex-grow">
+                    <p class="flex items-center gap-1"><svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path></svg> ${meta.district}</p>
+                    <p class="flex items-center gap-1"><svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z"></path></svg> ${meta.type}</p>
                 </div>
                 
-                <div class="grid grid-cols-2 gap-2 text-xs mb-4">
-                    <div class="bg-blue-50 p-2 rounded text-center border border-blue-100">
-                        <span class="block text-gray-500 mb-0.5">👥 ผู้เข้าชม</span>
-                        <span class="font-bold text-blue-800">${stat.visitors.toLocaleString()} คน</span>
+                <div class="grid grid-cols-2 gap-x-2 gap-y-3 text-sm border-t border-brand-border pt-4 mb-5">
+                    <div>
+                        <span class="block text-xs text-brand-muted">ผู้เข้าชม</span>
+                        <span class="font-bold text-brand-text">${stat.visitors.toLocaleString()}</span>
                     </div>
-                    <div class="bg-green-50 p-2 rounded text-center border border-green-100">
-                        <span class="block text-gray-500 mb-0.5">💰 รายได้</span>
-                        <span class="font-bold text-green-700">฿${stat.revenue.toLocaleString()}</span>
+                    <div>
+                        <span class="block text-xs text-brand-muted">รายได้ (฿)</span>
+                        <span class="font-bold text-brand-secondary">${stat.revenue.toLocaleString()}</span>
                     </div>
-                    <div class="col-span-2 bg-yellow-50 p-2 rounded text-center border border-yellow-100">
-                        <span class="text-gray-500">⭐ ความพึงพอใจ: </span>
-                        <span class="font-bold text-yellow-700">${avgSat} / 5</span>
+                    <div class="col-span-2">
+                        <span class="block text-xs text-brand-muted">ความพึงพอใจเฉลี่ย</span>
+                        <div class="flex items-center gap-1">
+                            <span class="font-bold text-brand-text">${avgSat}</span>
+                            <span class="text-xs text-brand-muted">/ 5.0</span>
+                        </div>
                     </div>
                 </div>
                 
                 <div class="grid grid-cols-2 gap-2 mt-auto">
-                    <button onclick="openAttractionDetail('${locName}')" class="bg-white border border-gray-300 hover:bg-gray-50 text-gray-700 text-xs font-bold py-2 rounded transition-colors flex items-center justify-center shadow-sm">
-                        📄 ดูรายละเอียด
+                    <button onclick="openAttractionDetail('${locName}')" class="bg-brand-bg border border-brand-border hover:bg-gray-100 text-brand-text text-xs font-semibold py-2 rounded transition-colors flex items-center justify-center">
+                        ข้อมูลเชิงลึก
                     </button>
-                    <button onclick="focusOnMap('${locName}')" class="bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold py-2 rounded transition-colors flex items-center justify-center shadow-sm">
-                        📍 ดูบนแผนที่
+                    <button onclick="focusOnMap('${locName}')" class="bg-brand-primary hover:bg-opacity-90 text-white text-xs font-semibold py-2 rounded transition-colors flex items-center justify-center">
+                        ดูพิกัด
                     </button>
                 </div>
             </div>
@@ -403,8 +416,8 @@ function openAttractionDetail(locName) {
     document.getElementById('modalType').innerText = meta.type;
     
     document.getElementById('modalVisitors').innerText = `${stat.vis.toLocaleString()}`;
-    document.getElementById('modalRevenue').innerText = `฿${stat.rev.toLocaleString()}`;
-    document.getElementById('modalSatisfaction').innerText = `${avgSat} / 5`;
+    document.getElementById('modalRevenue').innerText = `${stat.rev.toLocaleString()}`;
+    document.getElementById('modalSatisfaction').innerText = `${avgSat} / 5.0`;
     
     document.getElementById('modalSource').innerText = meta.source;
     document.getElementById('modalMapBtn').onclick = () => focusOnMap(locName);
@@ -434,10 +447,12 @@ function focusOnMap(locName) {
 function renderDataMining(data) {
     const containerCards = document.getElementById('dssClusterCards');
     const containerRecs = document.getElementById('dssRecommendations');
+    const dashboardRecs = document.getElementById('dashboardRecText');
 
     if (data.length === 0) {
-        containerCards.innerHTML = '<div class="col-span-full text-red-500 bg-red-50 p-4 rounded text-center">ไม่พบข้อมูลตามเงื่อนไข Filter ปัจจุบัน กรุณาปรับเปลี่ยน Filter</div>';
+        containerCards.innerHTML = '<div class="col-span-full text-brand-muted bg-brand-bg p-4 rounded border border-brand-border text-center">ไม่สามารถวิเคราะห์ข้อมูลได้ กรุณาปรับเปลี่ยนตัวกรอง</div>';
         containerRecs.innerHTML = '';
+        if (dashboardRecs) dashboardRecs.innerHTML = 'ไม่สามารถสร้างข้อเสนอแนะได้';
         if (dssScatterChartInstance) dssScatterChartInstance.destroy();
         return;
     }
@@ -466,8 +481,9 @@ function renderDataMining(data) {
 
     containerCards.innerHTML = '';
     let recsHTML = ``;
+    let dashboardRecFirst = ``;
 
-    Object.keys(clusterStats).forEach(c => {
+    Object.keys(clusterStats).forEach((c, index) => {
         const stat = clusterStats[c];
         stat.arpu = stat.visitors > 0 ? (stat.revenue / stat.visitors) : 0;
         stat.avgSat = stat.count > 0 ? (stat.sumSat / stat.count) : 0;
@@ -475,81 +491,75 @@ function renderDataMining(data) {
 
         let traitDescription = "";
         if (stat.arpu > avgSystemArpu) {
-            traitDescription += "มีการใช้จ่ายเฉลี่ยสูง ";
+            traitDescription += "มีกำลังซื้อและใช้จ่ายเฉลี่ยสูง ";
         } else {
-            traitDescription += "เน้นการเดินทางแบบประหยัด ";
+            traitDescription += "เน้นความคุ้มค่าของการเดินทาง ";
         }
         if (stat.visitors > avgSystemVis) {
-            traitDescription += "และเป็นกลุ่มที่มีปริมาณคนจำนวนมาก";
+            traitDescription += "เป็นกลุ่มผู้ใช้งานกระแสหลัก (Mainstream)";
         } else {
-            traitDescription += "และเป็นกลุ่มเฉพาะ (Niche)";
+            traitDescription += "เป็นกลุ่มเป้าหมายเฉพาะทาง (Niche)";
         }
 
         containerCards.innerHTML += `
-            <div class="bg-white p-5 rounded-xl border border-gray-200 shadow-sm relative overflow-hidden">
-                <h4 class="font-bold text-lg text-blue-900 mb-1 border-b border-gray-100 pb-2">${c}</h4>
-                <div class="text-xs text-gray-500 font-semibold mb-4 bg-gray-100 px-2 py-1 rounded inline-block">${stat.visitors.toLocaleString()} คน (${stat.pct.toFixed(1)}%)</div>
+            <div class="bg-white p-5 rounded-lg border border-brand-border flex flex-col">
+                <h4 class="font-bold text-lg text-brand-primary mb-1">${c}</h4>
+                <div class="text-xs text-brand-muted mb-4 border-b border-brand-border pb-3">ปริมาณข้อมูล: ${stat.visitors.toLocaleString()} คน (${stat.pct.toFixed(1)}%)</div>
                 
-                <div class="grid grid-cols-1 gap-y-2 text-sm text-gray-700 mb-4">
-                    <div class="flex justify-between items-center bg-gray-50 p-2 rounded">
-                        <span class="text-gray-500">รายได้เฉลี่ยต่อคน:</span>
-                        <span class="font-bold text-green-700">฿${Math.round(stat.arpu).toLocaleString()}</span>
+                <div class="space-y-3 text-sm flex-grow">
+                    <div class="flex justify-between items-center">
+                        <span class="text-brand-muted">รายได้เฉลี่ยต่อคน:</span>
+                        <span class="font-semibold text-brand-text">฿${Math.round(stat.arpu).toLocaleString()}</span>
                     </div>
-                    <div class="flex justify-between items-center bg-gray-50 p-2 rounded">
-                        <span class="text-gray-500">ความพึงพอใจเฉลี่ย:</span>
-                        <span class="font-bold text-yellow-600">${stat.avgSat.toFixed(2)} / 5</span>
+                    <div class="flex justify-between items-center">
+                        <span class="text-brand-muted">ความพึงพอใจเฉลี่ย:</span>
+                        <span class="font-semibold text-brand-text">${stat.avgSat.toFixed(2)}</span>
                     </div>
                 </div>
                 
-                <div class="text-xs text-gray-600 border-t border-dashed pt-3">
-                    <span class="font-bold text-gray-800 block mb-1">ลักษณะสำคัญ:</span>
+                <div class="text-xs text-brand-muted bg-brand-bg p-3 rounded mt-4">
+                    <span class="font-semibold text-brand-primary block mb-1">ลักษณะทางสถิติ:</span>
                     ${traitDescription}
                 </div>
             </div>
         `;
 
         let action = "";
-        let theme = "bg-gray-50 border-gray-200 text-gray-800";
-        let icon = "💡";
         
         if (stat.arpu > avgSystemArpu && stat.visitors <= avgSystemVis) {
-            action = `รายได้เฉลี่ยต่อคนสูง (฿${Math.round(stat.arpu).toLocaleString()}) แต่ยังมีจำนวนผู้เข้าชมน้อย: <b>ควรส่งเสริมการตลาดและโปรโมชันเพื่อเพิ่มจำนวนผู้เข้าชมเจาะกลุ่ม ${c}</b>`;
-            theme = "bg-blue-50 border-blue-200 text-blue-900";
-            icon = "🎯";
+            action = `กลุ่ม <strong>${c}</strong> มีรายได้ต่อคนสูง (฿${Math.round(stat.arpu).toLocaleString()}) แต่ยังมีปริมาณน้อย ควรพิจารณาจัดสรรงบการตลาดเชิงรุกเพื่อเจาะกลุ่มนี้เพิ่มเติม`;
         } else if (stat.visitors > avgSystemVis && stat.avgSat < avgSystemSat) {
-            action = `จำนวนผู้เข้าชมสูง แต่ความพึงพอใจเฉลี่ยค่อนข้างต่ำ (${stat.avgSat.toFixed(2)}/5): <b>ควรเร่งปรับปรุงคุณภาพการให้บริการและสิ่งอำนวยความสะดวกสำหรับกลุ่ม ${c}</b>`;
-            theme = "bg-red-50 border-red-200 text-red-900";
-            icon = "🛠️";
+            action = `กลุ่ม <strong>${c}</strong> มีปริมาณสูง แต่ความพึงพอใจเฉลี่ยลดต่ำลง (${stat.avgSat.toFixed(2)}) ควรเร่งตรวจสอบคุณภาพและมาตรฐานการให้บริการในพื้นที่เป้าหมาย`;
         } else if (stat.arpu > avgSystemArpu && stat.visitors > avgSystemVis) {
-            action = `เป็นกลุ่มแกนหลักที่ทำรายได้และปริมาณสูง: <b>ควรรักษามาตรฐาน บริหารจัดการคน และเพิ่มกิจกรรมสร้างมูลค่าเพื่อกลุ่ม ${c}</b>`;
-            theme = "bg-green-50 border-green-200 text-green-900";
-            icon = "🌟";
+            action = `กลุ่ม <strong>${c}</strong> เป็นกลุ่มแกนหลักที่ผลักดันรายได้ ควรมีมาตรการรักษามาตรฐานความพึงพอใจและต่อยอดโปรแกรม Customer Loyalty`;
         } else {
-            action = `กลุ่มผู้เยี่ยมชมทั่วไป: <b>ควรส่งเสริมการท่องเที่ยวในช่วงนอกเทศกาลเพื่อดึงดูดกลุ่ม ${c} ให้กระจายรายได้เข้าพื้นที่</b>`;
-            theme = "bg-purple-50 border-purple-200 text-purple-900";
-            icon = "📢";
+            action = `กลุ่ม <strong>${c}</strong> มีศักยภาพในการเติมเต็มช่วงนอกเทศกาล ควรพัฒนาแพ็กเกจท่องเที่ยวระยะสั้นที่สอดคล้องกับพฤติกรรม`;
         }
 
+        if (index === 0) dashboardRecFirst = action;
+
         recsHTML += `
-            <div class="${theme} p-4 rounded-lg border hover:shadow-md transition">
-                <div class="flex items-start gap-2">
-                    <span class="text-lg">${icon}</span>
-                    <p class="text-sm leading-relaxed">${action}</p>
-                </div>
+            <div class="flex items-start gap-3 p-3 hover:bg-brand-bg rounded transition-colors border-b border-brand-border last:border-0">
+                <svg class="w-5 h-5 text-brand-secondary flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                <p class="text-sm text-brand-text leading-relaxed">${action}</p>
             </div>
         `;
     });
 
     containerRecs.innerHTML = recsHTML;
+    if (dashboardRecs) dashboardRecs.innerHTML = dashboardRecFirst;
+    
     drawDssScatterChart(data);
 }
 
 function drawDssScatterChart(data) {
     const ctx = document.getElementById('dssScatterChart').getContext('2d');
+    
+    // Professional colors for clusters
     const clusterColors = {
-        "Family Chill-Out": "rgba(34, 197, 94, 0.8)",
-        "Solo Explorer": "rgba(234, 179, 8, 0.8)",
-        "Festival Spenders": "rgba(239, 68, 68, 0.8)"
+        "Family Chill-Out": "rgba(42, 157, 143, 0.7)", // Secondary
+        "Solo Explorer": "rgba(233, 196, 106, 0.7)",  // Accent
+        "Festival Spenders": "rgba(15, 76, 92, 0.7)"  // Primary
     };
 
     const datasets = [];
@@ -569,12 +579,14 @@ function drawDssScatterChart(data) {
         datasets.push({
             label: clusterName,
             data: clusterPoints,
-            backgroundColor: clusterColors[clusterName] || 'rgba(156, 163, 175, 0.8)',
+            backgroundColor: clusterColors[clusterName] || colors.muted,
+            borderColor: clusterColors[clusterName] ? clusterColors[clusterName].replace('0.7', '1') : colors.muted,
+            borderWidth: 1,
             pointRadius: (ctx) => {
                 let v = ctx.raw ? ctx.raw.visitors : 10;
-                return Math.max(5, Math.min(25, v / 15));
+                return Math.max(4, Math.min(20, v / 15));
             },
-            pointHoverRadius: 12
+            pointHoverRadius: 10
         });
     });
 
@@ -587,14 +599,28 @@ function drawDssScatterChart(data) {
             responsive: true,
             maintainAspectRatio: false,
             scales: {
-                x: { title: { display: true, text: 'คะแนนความพึงพอใจ (1-5 ดาว)' }, min: 1, max: 5 },
-                y: { title: { display: true, text: 'รายได้เฉลี่ยต่อคน (ARPU)' }, beginAtZero: true }
+                x: { 
+                    title: { display: true, text: 'คะแนนความพึงพอใจ (Satisfaction)' }, 
+                    min: 1, max: 5,
+                    grid: { color: colors.border, borderDash: [5, 5] }
+                },
+                y: { 
+                    title: { display: true, text: 'รายได้เฉลี่ยต่อคน (ARPU)' }, 
+                    beginAtZero: true,
+                    grid: { color: colors.border, borderDash: [5, 5] }
+                }
             },
             plugins: {
                 tooltip: {
+                    backgroundColor: 'rgba(31, 41, 55, 0.9)',
+                    padding: 10,
                     callbacks: {
-                        label: (ctx) => `[${ctx.raw.location}] พอใจ: ${ctx.raw.x}⭐ | ARPU: ฿${Math.round(ctx.raw.y)} | คน: ${ctx.raw.visitors}`
+                        label: (ctx) => ` ${ctx.raw.location} | พอใจ: ${ctx.raw.x} | ARPU: ฿${Math.round(ctx.raw.y)}`
                     }
+                },
+                legend: {
+                    position: 'bottom',
+                    labels: { usePointStyle: true, boxWidth: 8 }
                 }
             }
         }
@@ -608,10 +634,10 @@ function drawDssScatterChart(data) {
 
 function updateKPIs(data) {
     if (data.length === 0) {
-        document.getElementById('kpiRevenue').innerText = "0 ฿";
-        document.getElementById('kpiVisitors').innerText = "0 คน";
-        document.getElementById('kpiArpu').innerText = "0 ฿";
-        document.getElementById('kpiSatisfaction').innerText = "0.0 / 5";
+        document.getElementById('kpiRevenue').innerText = "0";
+        document.getElementById('kpiVisitors').innerText = "0";
+        document.getElementById('kpiArpu').innerText = "0";
+        document.getElementById('kpiSatisfaction').innerText = "0.0";
         return;
     }
     const totalRev = data.reduce((sum, row) => sum + row.revenue, 0);
@@ -619,10 +645,10 @@ function updateKPIs(data) {
     const avgSat = data.reduce((sum, row) => sum + row.satisfaction, 0) / data.length;
     const arpu = totalVis > 0 ? totalRev / totalVis : 0;
 
-    document.getElementById('kpiRevenue').innerText = totalRev.toLocaleString() + " ฿";
-    document.getElementById('kpiVisitors').innerText = totalVis.toLocaleString() + " คน";
-    document.getElementById('kpiArpu').innerText = arpu.toLocaleString(undefined, {maximumFractionDigits:0}) + " ฿";
-    document.getElementById('kpiSatisfaction').innerText = avgSat.toFixed(1) + " / 5";
+    document.getElementById('kpiRevenue').innerHTML = totalRev.toLocaleString() + ' <span class="text-sm font-normal text-brand-muted">บาท</span>';
+    document.getElementById('kpiVisitors').innerHTML = totalVis.toLocaleString() + ' <span class="text-sm font-normal text-brand-muted">คน</span>';
+    document.getElementById('kpiArpu').innerHTML = arpu.toLocaleString(undefined, {maximumFractionDigits:0}) + ' <span class="text-sm font-normal text-brand-muted">บาท</span>';
+    document.getElementById('kpiSatisfaction').innerHTML = avgSat.toFixed(2) + ' <span class="text-sm font-normal text-brand-muted">/ 5.0</span>';
 }
 
 function drawVisitorChart(data) {
@@ -631,13 +657,40 @@ function drawVisitorChart(data) {
     const visitorsByMonth = {};
     monthsOrder.forEach(m => visitorsByMonth[m] = 0);
     data.forEach(row => { if(visitorsByMonth[row.month] !== undefined) visitorsByMonth[row.month] += row.visitors; });
+    
     const labels = monthsOrder;
     const values = labels.map(m => visitorsByMonth[m]);
+    
     if (visitorChartInstance) visitorChartInstance.destroy();
     visitorChartInstance = new Chart(ctx, {
         type: 'line',
-        data: { labels: labels, datasets: [{ label: 'จำนวนนักท่องเที่ยว (คน)', data: values, backgroundColor: 'rgba(16, 185, 129, 0.2)', borderColor: 'rgba(16, 185, 129, 1)', borderWidth: 2, fill: true, tension: 0.4, pointBackgroundColor: 'rgba(16, 185, 129, 1)', pointRadius: 5 }] },
-        options: { responsive: true, scales: { y: { beginAtZero: true } } }
+        data: { 
+            labels: labels, 
+            datasets: [{ 
+                label: 'จำนวนนักท่องเที่ยว (คน)', 
+                data: values, 
+                backgroundColor: 'rgba(42, 157, 143, 0.1)', 
+                borderColor: colors.secondary, 
+                borderWidth: 2, 
+                fill: true, 
+                tension: 0.3, 
+                pointBackgroundColor: colors.surface, 
+                pointBorderColor: colors.secondary,
+                pointBorderWidth: 2,
+                pointRadius: 4 
+            }] 
+        },
+        options: { 
+            responsive: true, 
+            scales: { 
+                y: { beginAtZero: true, grid: { borderDash: [5, 5] } },
+                x: { grid: { display: false } }
+            },
+            plugins: {
+                legend: { display: false },
+                tooltip: { backgroundColor: 'rgba(31, 41, 55, 0.9)' }
+            }
+        }
     });
 }
 
@@ -645,65 +698,110 @@ function drawRevenueChart(data) {
     const ctx = document.getElementById('revenueChart').getContext('2d');
     const revenueByLocation = {};
     data.forEach(row => { revenueByLocation[row.location] = (revenueByLocation[row.location] || 0) + row.revenue; });
-    const labels = Object.keys(revenueByLocation);
-    const values = Object.values(revenueByLocation);
+    
+    // Sort logic to make chart cleaner
+    const sortedEntries = Object.entries(revenueByLocation).sort((a, b) => b[1] - a[1]);
+    const labels = sortedEntries.map(e => e[0]);
+    const values = sortedEntries.map(e => e[1]);
+
     if (revenueChartInstance) revenueChartInstance.destroy();
     
-    // MUST FIX 2: Horizontal Bar Chart to fit 11 location labels
     revenueChartInstance = new Chart(ctx, {
         type: 'bar',
-        data: { labels: labels, datasets: [{ label: 'รายได้ชุมชน (บาท)', data: values, backgroundColor: 'rgba(59, 130, 246, 0.7)', borderColor: 'rgba(59, 130, 246, 1)', borderWidth: 1, borderRadius: 4 }] },
+        data: { 
+            labels: labels, 
+            datasets: [{ 
+                label: 'รายได้ชุมชน (บาท)', 
+                data: values, 
+                backgroundColor: colors.primary, 
+                borderRadius: 4,
+                barThickness: 'flex',
+                maxBarThickness: 30
+            }] 
+        },
         options: { 
-            indexAxis: 'y', // Makes it horizontal
+            indexAxis: 'y',
             responsive: true, 
             maintainAspectRatio: false,
-            scales: { x: { beginAtZero: true } } 
+            scales: { 
+                x: { beginAtZero: true, grid: { borderDash: [5, 5] } },
+                y: { grid: { display: false }, ticks: { font: { size: 11 } } }
+            },
+            plugins: {
+                legend: { display: false },
+                tooltip: { backgroundColor: 'rgba(31, 41, 55, 0.9)' }
+            }
         }
     });
 }
 
 function drawClusterChart(data) {
     const ctx = document.getElementById('clusterChart').getContext('2d');
-    const clusterColors = { "Family Chill-Out": "rgba(34, 197, 94, 0.7)", "Solo Explorer": "rgba(234, 179, 8, 0.7)", "Festival Spenders": "rgba(239, 68, 68, 0.7)" };
+    const clusterColors = { 
+        "Family Chill-Out": colors.secondary, 
+        "Solo Explorer": colors.accent, 
+        "Festival Spenders": colors.primary 
+    };
+    
     const datasets = [];
     const clusters = [...new Set(data.map(d => d.cluster))];
+    
     clusters.forEach(clusterName => {
         const clusterPoints = data.filter(d => d.cluster === clusterName).map(d => ({ x: d.satisfaction, y: d.revenue, location: d.location }));
-        datasets.push({ label: clusterName, data: clusterPoints, backgroundColor: clusterColors[clusterName] || 'rgba(156, 163, 175, 0.7)', pointRadius: 8, pointHoverRadius: 10 });
+        datasets.push({ 
+            label: clusterName, 
+            data: clusterPoints, 
+            backgroundColor: clusterColors[clusterName] || colors.muted, 
+            pointRadius: 6, 
+            pointHoverRadius: 8 
+        });
     });
+    
     if (clusterChartInstance) clusterChartInstance.destroy();
+    
     clusterChartInstance = new Chart(ctx, {
         type: 'scatter',
         data: { datasets: datasets },
         options: {
             responsive: true,
             maintainAspectRatio: false,
-            scales: { x: { title: { display: true, text: 'คะแนนความพึงพอใจ (1-5)' }, min: 1, max: 5 }, y: { title: { display: true, text: 'รายได้รวมของรายการ (บาท)' }, beginAtZero: true } },
-            plugins: { tooltip: { callbacks: { label: (ctx) => `พอใจ: ${ctx.raw.x}, รายได้: ฿${ctx.raw.y.toLocaleString()} (${ctx.raw.location})` } } }
+            scales: { 
+                x: { title: { display: true, text: 'คะแนนความพึงพอใจ (1-5)' }, min: 1, max: 5, grid: { borderDash: [5, 5] } }, 
+                y: { title: { display: true, text: 'รายได้ของรายการ (บาท)' }, beginAtZero: true, grid: { borderDash: [5, 5] } } 
+            },
+            plugins: { 
+                tooltip: { 
+                    backgroundColor: 'rgba(31, 41, 55, 0.9)',
+                    callbacks: { label: (ctx) => ` ${ctx.raw.location} | พอใจ: ${ctx.raw.x} | รายได้: ฿${ctx.raw.y.toLocaleString()}` } 
+                },
+                legend: { position: 'bottom', labels: { usePointStyle: true, boxWidth: 8 } }
+            }
         }
     });
 }
 
 function renderReviews(data) {
+    // Note: Reviews section was not present in the new dashboard design outline, 
+    // but preserving the function to maintain logic contract. If it's not in HTML, it fails silently.
     const container = document.getElementById('reviewContainer');
+    if(!container) return;
+    
     container.innerHTML = '';
     const top5 = data.slice(0, 5);
     if(top5.length === 0) {
-        container.innerHTML = '<p class="text-sm text-gray-500 italic p-4 bg-gray-50 rounded">ไม่มีข้อมูลรีวิว</p>';
+        container.innerHTML = '<p class="text-sm text-brand-muted italic p-4 bg-brand-bg rounded">ไม่พบข้อมูลการประเมิน</p>';
         return;
     }
     top5.forEach(row => {
-        let borderColor = row.satisfaction >= 4.0 ? 'border-green-500' : (row.satisfaction >= 3.0 ? 'border-yellow-500' : 'border-red-500');
-        let starColor = row.satisfaction >= 4.0 ? 'text-green-600' : (row.satisfaction >= 3.0 ? 'text-yellow-600' : 'text-red-600');
         const div = document.createElement('div');
-        div.className = `p-4 bg-gray-50 rounded-lg border-l-4 ${borderColor} flex justify-between items-start gap-4 hover:bg-gray-100 transition`;
+        div.className = `p-4 bg-brand-surface rounded border border-brand-border flex justify-between items-start gap-4`;
         div.innerHTML = `
             <div>
-                <p class="text-sm font-semibold text-gray-800">${row.location} <span class="text-xs text-gray-500 font-normal ml-2 bg-gray-200 px-2 py-1 rounded-full">${row.travelStyle} | ${row.month}</span></p>
-                <p class="text-sm text-gray-700 mt-2 italic">"${row.review}"</p>
+                <p class="text-sm font-semibold text-brand-text">${row.location} <span class="text-xs text-brand-muted font-normal ml-2">${row.travelStyle} | ${row.month}</span></p>
+                <p class="text-sm text-brand-muted mt-1">"${row.review}"</p>
             </div>
-            <div class="text-right whitespace-nowrap bg-white px-3 py-1 rounded-full border border-gray-100 shadow-sm">
-                <span class="font-bold ${starColor}">⭐ ${row.satisfaction.toFixed(1)}</span>
+            <div class="text-right whitespace-nowrap bg-brand-bg px-2 py-1 rounded text-xs font-semibold text-brand-text">
+                ⭐ ${row.satisfaction.toFixed(1)}
             </div>
         `;
         container.appendChild(div);
