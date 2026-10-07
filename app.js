@@ -101,9 +101,12 @@ Chart.defaults.scale.grid.borderColor = colors.border;
 // NAVIGATION LOGIC
 // ==========================================
 function switchTab(tabName) {
-    document.getElementById('view-dashboard').classList.add('hidden');
-    document.getElementById('view-attractions').classList.add('hidden');
-    document.getElementById('view-datamining').classList.add('hidden');
+    const views = ['view-dashboard', 'view-attractions', 'view-datamining'];
+    views.forEach(v => {
+        const el = document.getElementById(v);
+        el.classList.add('hidden');
+        el.classList.remove('animate-fade-in-up');
+    });
     
     const navIds = ['nav-dashboard', 'nav-attractions', 'nav-datamining'];
     navIds.forEach(id => {
@@ -112,7 +115,12 @@ function switchTab(tabName) {
         btn.classList.add('border-transparent', 'text-brand-muted', 'bg-transparent');
     });
 
-    document.getElementById('view-' + tabName).classList.remove('hidden');
+    const targetView = document.getElementById('view-' + tabName);
+    targetView.classList.remove('hidden');
+    // Force DOM reflow so the animation plays from the start
+    void targetView.offsetWidth;
+    targetView.classList.add('animate-fade-in-up');
+
     const activeBtn = document.getElementById('nav-' + tabName);
     activeBtn.classList.remove('border-transparent', 'text-brand-muted', 'bg-transparent');
     activeBtn.classList.add('border-b-2', 'border-brand-orange', 'text-brand-yellow', 'bg-brand-surface');
