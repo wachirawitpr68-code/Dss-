@@ -137,6 +137,7 @@ async function initDashboard() {
         rawData = await response.json();
         
         initMap(); 
+        initWorksWheel();
         updateDashboard(); 
     } catch (error) {
         console.error("Error loading data:", error);
@@ -865,6 +866,206 @@ function drawRevenueChart(data) {
             }
         }
     });
+}
+
+// ==========================================
+// 3D WORKS WHEEL (Ported from React to Vanilla JS)
+// ==========================================
+const WHEEL_CONFIG = {
+    CARD_H: 0.38, CARD_MAX_W: 0.34, CARD_RATIO: 1.45, STEP: 40,
+    DRUM: 2.22, LENS: 2.7, RING_R: 1.14, BOW: 1.82, TITLE: 0.124, INDEX: 0.04,
+    CULL: 1.6, WHEEL_UNITS: 900, DRAG_UNITS: 420, SETTLE: 140, EASE: 0.12
+};
+
+let wheelTurn = 0, wheelTarget = 0, wheelActive = -1, wheelStage = { w: 0, h: 0 };
+let wheelMetrics = {}, wheelCount = 0, wheelLast = 0, wheelFrame = 0;
+let wheelCards = [], settlingTimeout = 0, isDraggingWheel = false, dragStartY = 0;
+
+function bowAt(drumDeg, bow) { return -bow * (1 - Math.cos((drumDeg * Math.PI) / 180)); }
+function placePos(ringDeg, drumDeg, ringR, drumR, bow, m) {
+    return `translateX(${m * bowAt(drumDeg, bow)}px) rotateZ(${(1 - m) * ringDeg}deg) translateY(${-(1 - m) * ringR}px) rotateX(${m * drumDeg}deg) translateZ(${m * drumR}px)`;
+}
+
+function initWorksWheel() {
+    const fallbackImg = 'https://images.unsplash.com/photo-1588614959060-4d144f28b207?q=80&w=2000&auto=format&fit=crop';
+    const items = Object.keys(locationDictionary).map(k => ({
+        title: k,
+        image: locationDictionary[k].img || fallbackImg
+    }));
+    
+    wheelCount = items.length;
+    wheelLast = Math.max(wheelCount - 1, 0);
+    
+    const stageEl = document.getElementById('works-stage');
+    const containerEl = document.getElementById('works-wheel-container');
+    const indexEl = document.getElementById('works-index');
+    
+    if(!stageEl || !containerEl) return;
+
+    containerEl.innerHTML = '';
+    indexEl.innerHTML = '';
+    wheelCards = [];
+
+    items.forEach((item, i) => {
+        const card = document.createElement('div');
+        card.className = "group absolute [backface-visibility:hidden] cursor-pointer";
+        card.onclick = () => toWheel(i + 1);
+        card.innerHTML = `<span class="bg-brand-surface shadow-xl block w-full h-full overflow-hidden rounded-xl border border-brand-border"><img src="${item.image}" draggable="false" class="w-full h-full object-cover opacity-80 group-hover:opacity-100 transition-opacity duration-300" /></span>`;
+        containerEl.appendChild(card);
+        wheelCards.push(card);
+
+        const li = document.createElement('li');
+        const btn = document.createElement('button');
+        btn.className = "cursor-pointer transition-colors outline-none hover:text-brand-orange text-sm mb-1.5";
+        btn.innerText = item.title;
+        btn.onclick = () => toWheel(i + 1);
+        li.appendChild(btn);
+        indexEl.appendChild(li);
+    });
+
+    const ro = new ResizeObserver(() => {
+        wheelStage = { w: stageEl.clientWidth, h: stageEl.clientHeight };
+        calcWheelMetrics();
+    });
+    ro.observe(stageEl);
+
+    stageEl.addEventListener("wheel", (e) => {
+        const next = wheelTarget + e.deltaY / WHEEL_CONFIG.WHEEL_UNITS;
+        if (next > 0 && next < wheelLast + 1) e.preventDefault();
+        toWheel(next);
+        clearTimeout(settlingTimeout);
+        settlingTimeout = setTimeout(() => toWheel(Math.round(wheelTarget)), WHEEL_CONFIG.SETTLE);
+    }, { passive: false });
+
+    stageEl.addEventListener("pointerdown", (e) => {
+        isDraggingWheel = true;
+        dragStartY = e.clientY;
+        stageEl.setPointerCapture(e.pointerId);
+    });
+    stageEl.addEventListener("pointermove", (e) => {
+        if (!isDraggingWheel) return;
+        toWheel(wheelTarget + (dragStartY - e.clientY) / WHEEL_CONFIG.DRAG_UNITS);
+        dragStartY = e.clientY;
+    });
+    stageEl.addEventListener("pointerup", () => {
+        isDraggingWheel = false;
+        if (wheelTarget > 1) toWheel(Math.round(wheelTarget));
+    });
+    stageEl.addEventListener("keydown", (e) => {
+        if (e.key === "ArrowDown") { toWheel(Math.round(wheelTarget) + 1); e.preventDefault(); }
+        if (e.key === "ArrowUp") { toWheel(Math.round(wheelTarget) - 1); e.preventDefault(); }
+    });
+
+    drawWheel();
+}
+
+function toWheel(next) {
+    wheelTarget = Math.min(Math.max(next, 0), wheelLast + 1);
+}
+
+function calcWheelMetrics() {
+    const w = wheelStage.w;
+    const h = wheelStage.h;
+    if(!h) return;
+    
+    const cardW = Math.min(h * WHEEL_CONFIG.CARD_H * WHEEL_CONFIG.CARD_RATIO, w * WHEEL_CONFIG.CARD_MAX_W);
+    const cardH = cardW / WHEEL_CONFIG.CARD_RATIO;
+    const drumR = cardH * WHEEL_CONFIG.DRUM;
+    const ringR = cardH * WHEEL_CONFIG.RING_R;
+    const ringScale = wheelCount ? Math.min(Math.max((((2 * Math.PI * ringR) / wheelCount) * 0.82) / (cardW || 1), 0.16), 1) : 1;
+    
+    wheelMetrics = {
+        cardW, cardH, ringR, ringScale, drumR,
+        bow: cardH * WHEEL_CONFIG.BOW,
+        depth: cardH * WHEEL_CONFIG.LENS,
+        title: cardH * WHEEL_CONFIG.TITLE,
+        index: cardH * WHEEL_CONFIG.INDEX,
+    };
+
+    const stageEl = document.getElementById('works-stage');
+    if(stageEl) stageEl.style.perspective = `${wheelMetrics.depth}px`;
+
+    const labelEl = document.getElementById('works-label');
+    const titleEl = document.getElementById('works-title');
+    const indexEl = document.getElementById('works-index');
+    
+    if(labelEl) labelEl.style.fontSize = `${wheelMetrics.title}px`;
+    if(titleEl) titleEl.style.fontSize = `${Math.max(18, wheelMetrics.title * 0.75)}px`;
+    if(indexEl) indexEl.style.fontSize = `${Math.max(12, wheelMetrics.index)}px`;
+
+    wheelCards.forEach(card => {
+        card.style.width = `${wheelMetrics.cardW}px`;
+        card.style.height = `${wheelMetrics.cardH}px`;
+        card.style.marginLeft = `${-wheelMetrics.cardW / 2}px`;
+        card.style.marginTop = `${-wheelMetrics.cardH / 2}px`;
+    });
+}
+
+function drawWheel() {
+    wheelFrame = requestAnimationFrame(drawWheel);
+    if (!wheelStage.h || !wheelMetrics.cardW) return;
+
+    const gap = wheelTarget - wheelTurn;
+    if (Math.abs(gap) < 0.0005) wheelTurn = wheelTarget;
+    else wheelTurn += gap * WHEEL_CONFIG.EASE;
+
+    const t = wheelTurn;
+    const m = Math.min(Math.max(t, 0), 1);
+    const pos = Math.max(0, t - 1);
+
+    const containerEl = document.getElementById('works-wheel-container');
+    if (containerEl) {
+        containerEl.style.transform = `translateZ(${-m * wheelMetrics.drumR}px)`;
+    }
+
+    wheelCards.forEach((card, i) => {
+        const d = i - pos;
+        const drumDeg = d * WHEEL_CONFIG.STEP;
+        
+        card.style.transform = placePos(
+            d * (360 / wheelCount),
+            drumDeg,
+            wheelMetrics.ringR,
+            wheelMetrics.drumR,
+            wheelMetrics.bow,
+            m
+        );
+        
+        card.style.opacity = m > 0.5 && Math.abs(d) > WHEEL_CONFIG.CULL ? "0" : "1";
+        card.style.zIndex = String(Math.round(100 - Math.abs(d) * 2));
+        
+        const face = card.firstElementChild;
+        if (face) {
+            const scale = wheelMetrics.ringScale + (1 - wheelMetrics.ringScale) * m;
+            face.style.transform = `scale(${scale})`;
+        }
+    });
+
+    const labelEl = document.getElementById('works-label');
+    const titleEl = document.getElementById('works-title');
+    if (labelEl) labelEl.style.opacity = String(1 - m);
+    
+    const nearIdx = Math.min(Math.max(Math.round(pos), 0), wheelLast);
+    
+    if (titleEl) {
+        titleEl.style.opacity = String(m);
+        const itemTitles = Object.keys(locationDictionary);
+        titleEl.innerText = itemTitles[nearIdx] || "";
+    }
+
+    if (wheelActive !== nearIdx) {
+        wheelActive = nearIdx;
+        const indexBtns = document.querySelectorAll('#works-index button');
+        indexBtns.forEach((btn, idx) => {
+            if(idx === wheelActive) {
+                btn.classList.add('text-brand-orange', 'font-bold');
+                btn.classList.remove('text-brand-muted');
+            } else {
+                btn.classList.remove('text-brand-orange', 'font-bold');
+                btn.classList.add('text-brand-muted');
+            }
+        });
+    }
 }
 
 initDashboard();
