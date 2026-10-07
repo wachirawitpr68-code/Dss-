@@ -3,31 +3,79 @@ let revenueChartInstance = null;
 let clusterChartInstance = null;
 let visitorChartInstance = null;
 
+// Map Variables
+let tourismMap = null;
+let mapMarkersGroup = null;
+
+// Location Meta Data (Virtual Dimension Table for Map mapping)
+// Image Sources are real Wikimedia Commons images.
+const locationDictionary = {
+    "ลานพญาศรีสัตตนาคราช": {
+        lat: 17.3995, lng: 104.7937,
+        type: "แลนด์มาร์ก / จุดเช็คอิน", district: "เมืองนครพนม",
+        img: "https://upload.wikimedia.org/wikipedia/commons/thumb/f/f7/Phaya_Si_Sattanakharat.jpg/800px-Phaya_Si_Sattanakharat.jpg",
+        source: "Wikimedia Commons"
+    },
+    "วัดพระธาตุพนม": {
+        lat: 16.9416, lng: 104.7231,
+        type: "ศาสนสถานสำคัญ", district: "ธาตุพนม",
+        img: "https://upload.wikimedia.org/wikipedia/commons/thumb/c/cd/Wat_Phra_That_Phanom2.jpg/800px-Wat_Phra_That_Phanom2.jpg",
+        source: "Wikimedia Commons"
+    },
+    "ถนนคนเดินนครพนม": {
+        lat: 17.4068, lng: 104.7891, // หอนาฬิกาเวียดนามอนุสรณ์ (ศูนย์กลางถนนคนเดิน)
+        type: "แหล่งช้อปปิ้ง / ตลาด", district: "เมืองนครพนม",
+        img: "https://upload.wikimedia.org/wikipedia/commons/thumb/1/10/Nakhon_Phanom_Clock_Tower.jpg/800px-Nakhon_Phanom_Clock_Tower.jpg",
+        source: "Wikimedia Commons"
+    },
+    "ชุมชนไทญ้อ": {
+        lat: 17.0544, lng: 104.6783, // บริเวณวัดพระธาตุเรณู (ศูนย์กลางวัฒนธรรมเรณูนคร)
+        type: "ชุมชนวัฒนธรรม", district: "เรณูนคร",
+        img: "https://upload.wikimedia.org/wikipedia/commons/thumb/5/52/Phra_That_Renu_Nakhon.jpg/800px-Phra_That_Renu_Nakhon.jpg",
+        source: "Wikimedia Commons"
+    }
+};
+
 // Fetch data and initialize
 async function initDashboard() {
     try {
         const response = await fetch('data.json');
         rawData = await response.json();
-        updateDashboard();
+        
+        initMap(); // Initialize map once
+        updateDashboard(); // Render all components
     } catch (error) {
         console.error("Error loading data:", error);
         alert("กรุณาเปิดไฟล์ผ่าน Live Server หรือ Web Server เพื่อให้โหลด data.json ได้ครับ");
     }
 }
 
-// Event Listeners for OLAP Filters (Slice & Dice)
+// Map Initialization
+function initMap() {
+    // กำหนดจุดศูนย์กลางของจังหวัดนครพนม
+    tourismMap = L.map('tourismMap').setView([17.15, 104.75], 10);
+    
+    // ใช้ OpenStreetMap
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+    }).addTo(tourismMap);
+
+    // สร้าง LayerGroup สำหรับจัดการ Marker เพื่อให้ลบและสร้างใหม่ได้ง่ายเมื่อ Filter เปลี่ยน
+    mapMarkersGroup = L.layerGroup().addTo(tourismMap);
+}
+
+// Event Listeners for OLAP Filters
 document.getElementById('filterFestival').addEventListener('change', updateDashboard);
 document.getElementById('filterStyle').addEventListener('change', updateDashboard);
-// Event Listener for the new Score Filter
 document.getElementById('filterScore').addEventListener('change', updateDashboard);
 
 function updateDashboard() {
-    // 1. Get filter values (OLAP: Slice & Dice)
+    // 1. Get filter values
     const festivalFilter = document.getElementById('filterFestival').value;
     const styleFilter = document.getElementById('filterStyle').value;
     const scoreFilter = document.getElementById('filterScore').value;
 
-    // 2. Filter data
+    // 2. Filter data (The Single Source of Truth for all UI components)
     let filteredData = rawData.filter(row => {
         let passFestival = festivalFilter === 'all' ? true : row.isFestival.toString() === festivalFilter;
         let passStyle = styleFilter === 'all' ? true : row.travelStyle === styleFilter;
@@ -40,17 +88,79 @@ function updateDashboard() {
         return passFestival && passStyle && passScore;
     });
 
-    // 3. Update KPIs
+    // 3. Update Existing Components
     updateKPIs(filteredData);
-
-    // 4. Update Charts
     drawVisitorChart(filteredData);
     drawRevenueChart(filteredData);
     drawClusterChart(filteredData);
-
-    // 5. Render Reviews (Top 5)
     renderReviews(filteredData);
+    
+    // 4. Update New Map Component
+    updateMap(filteredData);
 }
+
+// Map Update Logic (Task 1 & 2)
+function updateMap(data) {
+    if (!mapMarkersGroup) return;
+    
+    // Clear old markers for performance
+    mapMarkersGroup.clearLayers();
+
+    // Data Aggregation: Aggregate visitors by location based on filtered dataset
+    const locationStats = {};
+    let totalMapVisitors = 0;
+
+    data.forEach(row => {
+        if (!locationStats[row.location]) {
+            locationStats[row.location] = 0;
+        }
+        locationStats[row.location] += row.visitors;
+        totalMapVisitors += row.visitors;
+    });
+
+    const activeLocationsCount = Object.keys(locationStats).length;
+
+    // Update Map Summary Header
+    const summaryText = activeLocationsCount > 0 
+        ? `พบ ${activeLocationsCount} สถานที่ | รวม ${totalMapVisitors.toLocaleString()} คน` 
+        : `ไม่พบข้อมูลสถานที่จากเงื่อนไขนี้`;
+    document.getElementById('mapSummary').innerText = summaryText;
+
+    // Create Markers
+    Object.keys(locationStats).forEach(locName => {
+        const meta = locationDictionary[locName];
+        if (meta) {
+            const visitorCount = locationStats[locName];
+            
+            // Create Marker
+            const marker = L.marker([meta.lat, meta.lng]);
+            
+            // Popup HTML Design (with real image)
+            const popupContent = `
+                <div class="w-48">
+                    <img src="${meta.img}" 
+                         class="w-full h-32 object-cover rounded-t-sm mb-2 shadow-sm" 
+                         alt="${locName}" 
+                         onerror="this.src='https://via.placeholder.com/300x200?text=Image+Not+Found'">
+                    <h4 class="font-bold text-base text-gray-800 leading-tight mb-1">${locName}</h4>
+                    <p class="text-[11px] text-gray-600 mb-2 leading-snug">
+                        <span class="font-semibold">ประเภท:</span> ${meta.type}<br>
+                        <span class="font-semibold">อำเภอ:</span> ${meta.district}
+                    </p>
+                    <div class="bg-blue-50 border border-blue-100 rounded px-2 py-1 mb-1">
+                        <p class="text-sm font-semibold text-blue-700 text-center">นักท่องเที่ยว: ${visitorCount.toLocaleString()} คน</p>
+                    </div>
+                    <p class="text-[9px] text-gray-400 mt-2 text-right">Cr. ${meta.source}</p>
+                </div>
+            `;
+            
+            marker.bindPopup(popupContent);
+            mapMarkersGroup.addLayer(marker);
+        }
+    });
+}
+
+// ---------------- EXISTING FUNCTIONS (UNMODIFIED LOGIC) ----------------
 
 function updateKPIs(data) {
     if (data.length === 0) {
@@ -200,7 +310,6 @@ function renderReviews(data) {
     const container = document.getElementById('reviewContainer');
     container.innerHTML = '';
     
-    // ดึงมาแสดงแค่ 5 รายการแรก (Top 5)
     const top5 = data.slice(0, 5);
     
     if(top5.length === 0) {
@@ -209,7 +318,6 @@ function renderReviews(data) {
     }
 
     top5.forEach(row => {
-        // จัดการเรื่องสีตามเกณฑ์คะแนนดาว
         let borderColor = 'border-gray-300';
         let starColor = 'text-gray-500';
         
