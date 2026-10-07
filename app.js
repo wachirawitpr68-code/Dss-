@@ -30,62 +30,62 @@ const locationDictionary = {
     "ลานพญาศรีสัตตนาคราช": {
         lat: 17.3995, lng: 104.7937,
         type: "แลนด์มาร์ก / จุดเช็คอิน", district: "เมืองนครพนม",
-        img: "https://images.unsplash.com/photo-1629850239066-512c019da8bf?q=80&w=2000&auto=format&fit=crop",
-        source: "Unsplash"
+        img: "ภาพประกอบสถานที่/ลานพญาศรีสัตตนาคราช.jpg",
+        source: "Local"
     },
     "วัดพระธาตุพนมวรมหาวิหาร": {
         lat: 16.9416, lng: 104.7231,
         type: "ศาสนสถานสำคัญ", district: "ธาตุพนม",
-        img: "https://images.unsplash.com/photo-1570119616035-7fb5b06869cb?q=80&w=2000&auto=format&fit=crop",
-        source: "Unsplash"
+        img: "ภาพประกอบสถานที่/วัดพระธาตุพนมวรมหาวิหาร.jpg",
+        source: "Local"
     },
     "ถนนคนเดินนครพนม": {
         lat: 17.4068, lng: 104.7891,
         type: "แหล่งช้อปปิ้ง / ตลาด", district: "เมืองนครพนม",
-        img: "https://images.unsplash.com/photo-1533900298318-6b8da08a523e?q=80&w=2000&auto=format&fit=crop",
-        source: "Unsplash"
+        img: "ภาพประกอบสถานที่/ถนนคนเดินนครพนม.jpg",
+        source: "Local"
     },
     "ชุมชนไทญ้อ": {
         lat: 17.0544, lng: 104.6783,
         type: "ชุมชนวัฒนธรรม", district: "เรณูนคร",
-        img: "https://images.unsplash.com/photo-1626084094056-b7ff5a22f30b?q=80&w=2000&auto=format&fit=crop",
-        source: "Unsplash"
+        img: "ภาพประกอบสถานที่/ชุมชนไทญ้อ.jpg",
+        source: "Local"
     },
     "วัดนักบุญอันนา หนองแสง": {
         lat: 17.4191, lng: 104.7818,
         type: "ศาสนสถาน (โบสถ์คริสต์)", district: "เมืองนครพนม",
-        img: "https://images.unsplash.com/photo-1548625361-ec8590cb7c64?q=80&w=2000&auto=format&fit=crop",
-        source: "Unsplash"
+        img: "ภาพประกอบสถานที่/วัดนักบุญอันนา หนองแสง.jpeg",
+        source: "Local"
     },
     "บ้านลุงโฮจิมินห์ (บ้านนาจอก)": {
         lat: 17.3822, lng: 104.7538,
         type: "สถานที่ประวัติศาสตร์", district: "เมืองนครพนม",
-        img: "https://images.unsplash.com/photo-1582200216346-619f592c3061?q=80&w=2000&auto=format&fit=crop",
-        source: "Unsplash"
+        img: "ภาพประกอบสถานที่/บ้านลุงโฮจิมินห์.jpeg",
+        source: "Local"
     },
     "พิพิธภัณฑ์จวนผู้ว่าราชการจังหวัดนครพนม (หลังเก่า)": {
         lat: 17.4095, lng: 104.7850,
         type: "พิพิธภัณฑ์", district: "เมืองนครพนม",
-        img: "https://images.unsplash.com/photo-1590069004245-c40d7c71f496?q=80&w=2000&auto=format&fit=crop",
-        source: "Unsplash"
+        img: "ภาพประกอบสถานที่/พิพิธภัณฑ์จวนผู้ว่าราชการจังหวัดนครพนม (หลังเก่า).jpg",
+        source: "Local"
     },
     "เส้นทางจักรยานริมแม่น้ำโขง (River Walk)": {
         lat: 17.4150, lng: 104.7830,
         type: "สถานที่พักผ่อน / กีฬา", district: "เมืองนครพนม",
-        img: "https://images.unsplash.com/photo-1527631746610-bca00a040d60?q=80&w=2000&auto=format&fit=crop",
-        source: "Unsplash"
+        img: "ภาพประกอบสถานที่/เส้นทางจักรยานแม่น้ำโขง.jpg",
+        source: "Local"
     },
     "อุทยานแห่งชาติภูลังกา": {
         lat: 17.9350, lng: 104.1480,
         type: "อุทยานแห่งชาติ", district: "บ้านแพง",
-        img: "https://images.unsplash.com/photo-1518182170546-076616fd46fa?q=80&w=2000&auto=format&fit=crop",
-        source: "Unsplash"
+        img: "ภาพประกอบสถานที่/อุทยานแห่งชาติภูลังกา.jpg",
+        source: "Local"
     },
     "วัดพระธาตุเรณู": {
         lat: 17.0544, lng: 104.6783,
         type: "ศาสนสถานสำคัญ", district: "เรณูนคร",
-        img: "https://images.unsplash.com/photo-1605335968412-f47ec05a0d33?q=80&w=2000&auto=format&fit=crop",
-        source: "Unsplash"
+        img: "ภาพประกอบสถานที่/วัดธาตุเรณู.jpg",
+        source: "Local"
     }
 };
 
