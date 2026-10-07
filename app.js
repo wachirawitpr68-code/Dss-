@@ -1,6 +1,5 @@
 let rawData = [];
 let revenueChartInstance = null;
-let clusterChartInstance = null;
 let visitorChartInstance = null;
 let dssScatterChartInstance = null;
 
@@ -198,7 +197,7 @@ function updateDashboard() {
     generateDashboardInsight(filteredData, locationStats);
     drawVisitorChart(filteredData);
     drawRevenueChart(filteredData);
-    drawClusterChart(filteredData); 
+    // Removed drawClusterChart(filteredData) to prevent JS crash since it was removed from HTML
     
     updateMap(locationStats, totalMapVisitors);
     renderAttractions(locationStats);
@@ -730,51 +729,6 @@ function drawRevenueChart(data) {
             plugins: {
                 legend: { display: false },
                 tooltip: { backgroundColor: 'rgba(31, 41, 55, 0.9)' }
-            }
-        }
-    });
-}
-
-function drawClusterChart(data) {
-    const ctx = document.getElementById('clusterChart').getContext('2d');
-    const clusterColors = { 
-        "Family Chill-Out": colors.secondary, 
-        "Solo Explorer": colors.accent, 
-        "Festival Spenders": colors.primary 
-    };
-    
-    const datasets = [];
-    const clusters = [...new Set(data.map(d => d.cluster))];
-    
-    clusters.forEach(clusterName => {
-        const clusterPoints = data.filter(d => d.cluster === clusterName).map(d => ({ x: d.satisfaction, y: d.revenue, location: d.location }));
-        datasets.push({ 
-            label: clusterName, 
-            data: clusterPoints, 
-            backgroundColor: clusterColors[clusterName] || colors.muted, 
-            pointRadius: 6, 
-            pointHoverRadius: 8 
-        });
-    });
-    
-    if (clusterChartInstance) clusterChartInstance.destroy();
-    
-    clusterChartInstance = new Chart(ctx, {
-        type: 'scatter',
-        data: { datasets: datasets },
-        options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            scales: { 
-                x: { title: { display: true, text: 'คะแนนความพึงพอใจ (1-5)' }, min: 1, max: 5, grid: { borderDash: [5, 5] } }, 
-                y: { title: { display: true, text: 'รายได้ของรายการ (บาท)' }, beginAtZero: true, grid: { borderDash: [5, 5] } } 
-            },
-            plugins: { 
-                tooltip: { 
-                    backgroundColor: 'rgba(31, 41, 55, 0.9)',
-                    callbacks: { label: (ctx) => ` ${ctx.raw.location} | พอใจ: ${ctx.raw.x} | รายได้: ฿${ctx.raw.y.toLocaleString()}` } 
-                },
-                legend: { position: 'bottom', labels: { usePointStyle: true, boxWidth: 8 } }
             }
         }
     });
