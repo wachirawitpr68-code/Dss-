@@ -8,7 +8,7 @@ let dssScatterChartInstance = null;
 let tourismMap = null;
 let mapMarkersGroup = null;
 
-// 11 Locations Dictionary (Matching user's list + existing)
+// 11 Locations Dictionary
 const locationDictionary = {
     "ลานพญาศรีสัตตนาคราช": {
         lat: 17.3995, lng: 104.7937,
@@ -156,6 +156,13 @@ function updateDashboard() {
         countEl.innerText = `แสดงข้อมูล ${filteredData.length} จาก ${rawData.length} รายการ`;
     }
 
+    // EMPTY STATE HANDLING (MUST FIX 4)
+    if (filteredData.length === 0) {
+        document.getElementById('globalEmptyState').classList.remove('hidden');
+    } else {
+        document.getElementById('globalEmptyState').classList.add('hidden');
+    }
+
     const locationStats = {};
     let totalMapVisitors = 0;
     
@@ -173,7 +180,7 @@ function updateDashboard() {
     updateKPIs(filteredData);
     generateDashboardInsight(filteredData, locationStats);
     drawVisitorChart(filteredData);
-    drawRevenueChart(filteredData);
+    drawRevenueChart(filteredData); // Using Horizontal Bar now
     drawClusterChart(filteredData); 
     renderReviews(filteredData);
     
@@ -248,7 +255,6 @@ function updateMap(locationStats, totalMapVisitors) {
             const marker = L.marker([meta.lat, meta.lng]);
             window.mapMarkers[locName] = marker;
             
-            // Handle missing image safely without URL fetch error
             const imgHtml = meta.img 
                 ? `<img src="${meta.img}" style="width: 100%; height: 140px; object-fit: cover; border-radius: 6px 6px 0 0; margin-bottom: 8px;" alt="${locName}">`
                 : `<div style="width: 100%; height: 140px; background: linear-gradient(135deg, #1e3a8a, #3b82f6); border-radius: 6px 6px 0 0; margin-bottom: 8px; display: flex; align-items: center; justify-content: center; color: white; font-weight: bold; font-size: 14px; text-align: center; padding: 10px; box-sizing: border-box;">${locName}</div>`;
@@ -642,10 +648,17 @@ function drawRevenueChart(data) {
     const labels = Object.keys(revenueByLocation);
     const values = Object.values(revenueByLocation);
     if (revenueChartInstance) revenueChartInstance.destroy();
+    
+    // MUST FIX 2: Horizontal Bar Chart to fit 11 location labels
     revenueChartInstance = new Chart(ctx, {
         type: 'bar',
         data: { labels: labels, datasets: [{ label: 'รายได้ชุมชน (บาท)', data: values, backgroundColor: 'rgba(59, 130, 246, 0.7)', borderColor: 'rgba(59, 130, 246, 1)', borderWidth: 1, borderRadius: 4 }] },
-        options: { responsive: true, scales: { y: { beginAtZero: true } } }
+        options: { 
+            indexAxis: 'y', // Makes it horizontal
+            responsive: true, 
+            maintainAspectRatio: false,
+            scales: { x: { beginAtZero: true } } 
+        }
     });
 }
 
@@ -664,6 +677,7 @@ function drawClusterChart(data) {
         data: { datasets: datasets },
         options: {
             responsive: true,
+            maintainAspectRatio: false,
             scales: { x: { title: { display: true, text: 'คะแนนความพึงพอใจ (1-5)' }, min: 1, max: 5 }, y: { title: { display: true, text: 'รายได้รวมของรายการ (บาท)' }, beginAtZero: true } },
             plugins: { tooltip: { callbacks: { label: (ctx) => `พอใจ: ${ctx.raw.x}, รายได้: ฿${ctx.raw.y.toLocaleString()} (${ctx.raw.location})` } } }
         }

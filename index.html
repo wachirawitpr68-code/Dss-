@@ -21,69 +21,84 @@
     </style>
 </head>
 <body class="p-4 md:p-6">
-    <div class="max-w-7xl mx-auto space-y-6">
+    <div class="max-w-7xl mx-auto">
 
         <!-- 1. NAVIGATION -->
-        <nav class="bg-blue-900 text-white rounded-xl p-4 flex flex-wrap gap-4 shadow-md items-center">
+        <nav class="bg-blue-900 text-white rounded-xl p-4 flex flex-wrap gap-4 shadow-md items-center mb-6">
             <div class="font-bold text-yellow-300 mr-4 border-r pr-4 border-blue-700 text-lg tracking-wide">Tourism DSS</div>
             <button id="nav-dashboard" class="font-bold border-b-2 border-white pb-1 px-2 transition hover:text-blue-100" onclick="switchTab('dashboard')">📊 Dashboard</button>
             <button id="nav-attractions" class="text-blue-200 hover:text-white px-2 transition" onclick="switchTab('attractions')">📍 Attractions</button>
             <button id="nav-datamining" class="text-blue-200 hover:text-white px-2 transition" onclick="switchTab('datamining')">🧠 Data Mining / DSS</button>
         </nav>
 
+        <!-- 2. GLOBAL FILTERS (Moved outside of Tab Views to be persistent) -->
+        <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100 mb-6">
+            <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-4">
+                <div>
+                    <h1 class="text-2xl font-bold text-blue-900">Nakhon Phanom Tourism DSS</h1>
+                    <p class="text-gray-500 text-sm">ระบบสนับสนุนการตัดสินใจ วิเคราะห์สถิติและรายได้ชุมชน</p>
+                </div>
+                <!-- OLAP Filters -->
+                <div class="flex flex-wrap gap-4 bg-gray-50 p-3 rounded-lg border border-gray-200">
+                    <div>
+                        <label class="block text-xs text-gray-500 mb-1 cursor-help flex items-center gap-1" title="OLAP Operation: Slice (การตัดแบ่งข้อมูลตามช่วงเวลา)">
+                            เทศกาล <span>ℹ️</span>
+                        </label>
+                        <select id="filterFestival" class="border border-gray-300 rounded p-1.5 text-sm bg-white outline-none focus:border-blue-500">
+                            <option value="all">ทั้งหมด (All)</option>
+                            <option value="true">ช่วงเทศกาล (Festival)</option>
+                            <option value="false">ช่วงปกติ (Normal)</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-xs text-gray-500 mb-1 cursor-help flex items-center gap-1" title="OLAP Operation: Dice (การเลือกดูเฉพาะมิติของกลุ่มเป้าหมาย)">
+                            กลุ่มนักท่องเที่ยว <span>ℹ️</span>
+                        </label>
+                        <select id="filterStyle" class="border border-gray-300 rounded p-1.5 text-sm bg-white outline-none focus:border-blue-500">
+                            <option value="all">ทั้งหมด (All)</option>
+                            <option value="ลุยเดี่ยว">ลุยเดี่ยว (Solo)</option>
+                            <option value="กลุ่มเพื่อน">กลุ่มเพื่อน (Friends)</option>
+                            <option value="ครอบครัว">ครอบครัว (Family)</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-xs text-blue-700 font-semibold mb-1 cursor-help flex items-center gap-1" title="กรองข้อมูลตามระดับความพึงพอใจของนักท่องเที่ยว">
+                            กรองรีวิว (คะแนนดาว)
+                        </label>
+                        <select id="filterScore" class="border border-blue-300 rounded p-1.5 text-sm bg-blue-50 outline-none focus:border-blue-500">
+                            <option value="all">ทุกระดับคะแนน</option>
+                            <option value="high">4.0 - 5.0 (พอใจมาก)</option>
+                            <option value="med">3.0 - 3.9 (ปานกลาง)</option>
+                            <option value="low">ต่ำกว่า 3.0 (ต้องปรับปรุง)</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Filter Context & Record Count -->
+            <div class="flex flex-col sm:flex-row items-center justify-between border-t border-gray-100 pt-3 mt-2">
+                <p class="text-xs text-gray-500 flex items-center">
+                    <span class="mr-1">💡</span> ข้อมูลในระบบทั้งหมดจะปรับตามตัวกรองที่เลือก (Single Source of Truth)
+                </p>
+                <div id="recordCount" class="text-sm font-bold text-blue-800 bg-blue-100 border border-blue-200 px-4 py-1.5 rounded-full mt-2 sm:mt-0 shadow-sm">
+                    <!-- Injected via JS -->
+                </div>
+            </div>
+        </div>
+
+        <!-- GLOBAL EMPTY STATE WARNING -->
+        <div id="globalEmptyState" class="hidden bg-red-50 border border-red-200 text-red-700 p-6 rounded-xl mb-6 flex flex-col sm:flex-row items-center justify-center gap-4 shadow-sm text-center sm:text-left">
+            <span class="text-4xl">⚠️</span>
+            <div>
+                <h4 class="font-bold text-lg mb-1">ไม่พบข้อมูลที่ตรงกับเงื่อนไขที่เลือก</h4>
+                <p class="text-sm">กรุณาปรับเปลี่ยนตัวกรอง (Filter) ด้านบนใหม่อีกครั้ง เพื่อให้ระบบแสดงผลการวิเคราะห์</p>
+            </div>
+        </div>
+
         <!-- ========================================== -->
         <!-- VIEW: DASHBOARD (Active) -->
         <!-- ========================================== -->
         <div id="view-dashboard" class="space-y-6 block">
-            
-            <!-- Header & Global Filters -->
-            <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
-                <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-4">
-                    <div>
-                        <h1 class="text-2xl font-bold text-blue-900">Nakhon Phanom Tourism Dashboard</h1>
-                        <p class="text-gray-500 text-sm">ระบบสนับสนุนการตัดสินใจ (DSS) วิเคราะห์สถิติและรายได้ชุมชน</p>
-                    </div>
-                    <!-- OLAP Filters -->
-                    <div class="flex flex-wrap gap-4 bg-gray-50 p-3 rounded-lg border border-gray-200">
-                        <div>
-                            <label class="block text-xs text-gray-500 mb-1">เทศกาล (Slice)</label>
-                            <select id="filterFestival" class="border border-gray-300 rounded p-1.5 text-sm bg-white outline-none focus:border-blue-500">
-                                <option value="all">ทั้งหมด (All)</option>
-                                <option value="true">ช่วงเทศกาล (Festival)</option>
-                                <option value="false">ช่วงปกติ (Normal)</option>
-                            </select>
-                        </div>
-                        <div>
-                            <label class="block text-xs text-gray-500 mb-1">กลุ่มนักท่องเที่ยว (Dice)</label>
-                            <select id="filterStyle" class="border border-gray-300 rounded p-1.5 text-sm bg-white outline-none focus:border-blue-500">
-                                <option value="all">ทั้งหมด (All)</option>
-                                <option value="ลุยเดี่ยว">ลุยเดี่ยว (Solo)</option>
-                                <option value="กลุ่มเพื่อน">กลุ่มเพื่อน (Friends)</option>
-                                <option value="ครอบครัว">ครอบครัว (Family)</option>
-                            </select>
-                        </div>
-                        <div>
-                            <label class="block text-xs text-blue-700 font-semibold mb-1">กรองรีวิว (คะแนนดาว)</label>
-                            <select id="filterScore" class="border border-blue-300 rounded p-1.5 text-sm bg-blue-50 outline-none focus:border-blue-500">
-                                <option value="all">ทุกระดับคะแนน</option>
-                                <option value="high">4.0 - 5.0 (พอใจมาก)</option>
-                                <option value="med">3.0 - 3.9 (ปานกลาง)</option>
-                                <option value="low">ต่ำกว่า 3.0 (ต้องปรับปรุง)</option>
-                            </select>
-                        </div>
-                    </div>
-                </div>
-                
-                <!-- Filter Context & Record Count -->
-                <div class="flex flex-col sm:flex-row items-center justify-between border-t border-gray-100 pt-3 mt-2">
-                    <p class="text-xs text-gray-500 flex items-center">
-                        <span class="mr-1">💡</span> ข้อมูลใน Dashboard ทั้งหมดจะปรับตามตัวกรองที่เลือก (Single Source of Truth)
-                    </p>
-                    <div id="recordCount" class="text-sm font-bold text-blue-800 bg-blue-100 border border-blue-200 px-4 py-1.5 rounded-full mt-2 sm:mt-0 shadow-sm">
-                        <!-- Injected via JS -->
-                    </div>
-                </div>
-            </div>
 
             <!-- Dynamic Dashboard Insight -->
             <div id="dashboardInsightContainer" class="bg-gradient-to-r from-blue-50 to-indigo-50 p-4 rounded-xl shadow-sm border border-blue-100 flex items-start gap-4">
@@ -104,7 +119,6 @@
                     <p class="text-gray-500 text-sm">จำนวนนักท่องเที่ยว</p>
                     <h2 class="text-2xl lg:text-3xl font-bold text-gray-800" id="kpiVisitors">0 คน</h2>
                 </div>
-                <!-- Updated KPI: ARPU -->
                 <div class="bg-white p-5 rounded-xl shadow-sm border-l-4 border-purple-500 hover:shadow-md transition">
                     <p class="text-gray-500 text-sm flex items-center cursor-help" title="รายได้เฉลี่ยต่อคน = รายได้รวม ÷ จำนวนนักท่องเที่ยว">
                         รายได้เฉลี่ยต่อคน (ARPU) 
@@ -144,7 +158,9 @@
                 <!-- OLAP Revenue -->
                 <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
                     <h3 class="text-lg font-bold mb-4 text-gray-800">รายได้ชุมชนแยกตามสถานที่</h3>
-                    <canvas id="revenueChart" height="200"></canvas>
+                    <div class="relative h-[300px]">
+                        <canvas id="revenueChart"></canvas>
+                    </div>
                 </div>
                 <!-- Clustering -->
                 <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
@@ -152,7 +168,9 @@
                         Data Mining: Customer Segmentation
                     </h3>
                     <p class="text-xs text-gray-500 mb-4 mt-1">ภาพรวมคร่าวๆ ของกลุ่มลูกค้า (วิเคราะห์จากความพึงพอใจและรายได้)</p>
-                    <canvas id="clusterChart" height="200"></canvas>
+                    <div class="relative h-[300px]">
+                        <canvas id="clusterChart"></canvas>
+                    </div>
                 </div>
             </div>
 
@@ -190,12 +208,15 @@
                 <!-- Algorithm Explanation -->
                 <div class="bg-indigo-50 border border-indigo-100 p-4 rounded-lg mt-4 flex items-start gap-3">
                     <div class="text-xl mt-1">ℹ️</div>
-                    <div>
+                    <div class="flex-grow">
                         <p class="text-sm text-indigo-900 font-semibold cursor-help" title="K-Means คืออัลกอริทึมจัดกลุ่มข้อมูล (Clustering) ที่หาความคล้ายคลึงกันทางสถิติ">
                             วิธีการจัดกลุ่มที่จำลองใช้ในระบบ: <span class="font-bold underline decoration-dotted">K-Means Clustering</span>
                         </p>
                         <p class="text-xs text-indigo-700 mt-1">
                             <strong>Features หลักที่ใช้ในการจัดกลุ่ม:</strong> พฤติกรรมการใช้จ่าย (Revenue / ARPU) และ ความพึงพอใจ (Satisfaction)
+                        </p>
+                        <p class="text-xs text-indigo-500 mt-2 italic border-t border-indigo-200 pt-2 inline-block">
+                            *(หมายเหตุ: ข้อมูล Cluster ใน Demo นี้เป็นการจำลองจัดกลุ่มล่วงหน้า (Pre-computed) โดยใช้หลักการ K-Means เพื่อการนำเสนอแนวทาง Decision Support)*
                         </p>
                     </div>
                 </div>
