@@ -2,13 +2,13 @@ let rawData = [];
 let revenueChartInstance = null;
 let clusterChartInstance = null;
 let visitorChartInstance = null;
-let dssScatterChartInstance = null; // New chart for Phase 3
+let dssScatterChartInstance = null;
 
 // Map Variables
 let tourismMap = null;
 let mapMarkersGroup = null;
 
-// Location Meta Data
+// Location Meta Data (Actual data from previous phase)
 const locationDictionary = {
     "ลานพญาศรีสัตตนาคราช": {
         lat: 17.3995, lng: 104.7937,
@@ -109,235 +109,93 @@ function updateDashboard() {
         return passFestival && passStyle && passScore;
     });
 
-    // Phase 1 updates
+    // 1. UI Rule: Show Record Count
+    const countEl = document.getElementById('recordCount');
+    if (countEl) {
+        countEl.innerText = `แสดงข้อมูล ${filteredData.length} จาก ${rawData.length} รายการ`;
+    }
+
+    // 2. Pre-aggregate Location Stats for Map & Attractions & Dashboard Insights
+    const locationStats = {};
+    let totalMapVisitors = 0;
+    
+    filteredData.forEach(row => {
+        if (!locationStats[row.location]) {
+            locationStats[row.location] = { visitors: 0, revenue: 0, sumSat: 0, count: 0 };
+        }
+        locationStats[row.location].visitors += row.visitors;
+        locationStats[row.location].revenue += row.revenue;
+        locationStats[row.location].sumSat += row.satisfaction;
+        locationStats[row.location].count += 1;
+        totalMapVisitors += row.visitors;
+    });
+
     updateKPIs(filteredData);
+    generateDashboardInsight(filteredData, locationStats);
     drawVisitorChart(filteredData);
     drawRevenueChart(filteredData);
-    drawClusterChart(filteredData); // Dashboard small cluster
+    drawClusterChart(filteredData); 
     renderReviews(filteredData);
-    updateMap(filteredData);
     
-    // Phase 2 updates
-    renderAttractions(filteredData);
-
-    // Phase 3 updates
+    updateMap(locationStats, totalMapVisitors);
+    renderAttractions(locationStats);
     renderDataMining(filteredData);
 }
 
 // ==========================================
-// PHASE 3: DATA MINING & DSS LOGIC
+// DASHBOARD QUICK INSIGHT
 // ==========================================
-function renderDataMining(data) {
-    const containerCards = document.getElementById('dssClusterCards');
-    const containerInsights = document.getElementById('dssInsights');
-    const containerRecs = document.getElementById('dssRecommendations');
-
+function generateDashboardInsight(data, locationStats) {
+    const insightTextEl = document.getElementById('dashboardInsightText');
     if (data.length === 0) {
-        containerCards.innerHTML = '<div class="col-span-3 text-red-500 bg-red-50 p-4 rounded text-center">ไม่พบข้อมูลตามเงื่อนไข Filter ปัจจุบัน กรุณาปรับเปลี่ยน Filter</div>';
-        containerInsights.innerHTML = '<p class="text-gray-400">N/A</p>';
-        containerRecs.innerHTML = '';
-        if (dssScatterChartInstance) dssScatterChartInstance.destroy();
+        insightTextEl.innerHTML = '<span class="text-red-500">ไม่พบข้อมูล กรุณาปรับเปลี่ยนตัวกรอง</span>';
         return;
     }
 
-    // 1. Calculate Aggregates
-    const clusterStats = {};
-    let totalVis = 0;
+    // Find top location by visitors
+    let topLoc = "-"; let maxVis = -1;
+    for (const [loc, stat] of Object.entries(locationStats)) {
+        if (stat.visitors > maxVis) { maxVis = stat.visitors; topLoc = loc; }
+    }
 
-    data.forEach(row => {
-        if (!clusterStats[row.cluster]) {
-            clusterStats[row.cluster] = { visitors: 0, revenue: 0, sumSat: 0, count: 0, styles: {} };
-        }
-        clusterStats[row.cluster].visitors += row.visitors;
-        clusterStats[row.cluster].revenue += row.revenue;
-        clusterStats[row.cluster].sumSat += row.satisfaction;
-        clusterStats[row.cluster].count += 1;
-        
-        // Track variable for characteristics
-        clusterStats[row.cluster].styles[row.travelStyle] = (clusterStats[row.cluster].styles[row.travelStyle] || 0) + row.visitors;
-        totalVis += row.visitors;
+    // Find top cluster by ARPU
+    const cStats = {};
+    data.forEach(r => {
+        if (!cStats[r.cluster]) cStats[r.cluster] = { vis: 0, rev: 0 };
+        cStats[r.cluster].vis += r.visitors;
+        cStats[r.cluster].rev += r.revenue;
     });
+    let topCluster = "-"; let maxArpu = -1;
+    for (const [c, st] of Object.entries(cStats)) {
+        let arpu = st.vis > 0 ? st.rev / st.vis : 0;
+        if (arpu > maxArpu) { maxArpu = arpu; topCluster = c; }
+    }
 
-    let maxArpu = -1; let maxArpuCluster = "";
-    let minSat = 6; let minSatCluster = "";
-    let maxVol = -1; let maxVolCluster = "";
-    let maxVolPct = 0;
-
-    // Process variables
-    Object.keys(clusterStats).forEach(c => {
-        const stat = clusterStats[c];
-        stat.arpu = stat.visitors > 0 ? (stat.revenue / stat.visitors) : 0;
-        stat.avgSat = stat.count > 0 ? (stat.sumSat / stat.count) : 0;
-        stat.pct = totalVis > 0 ? (stat.visitors / totalVis) * 100 : 0;
-
-        if (stat.arpu > maxArpu) { maxArpu = stat.arpu; maxArpuCluster = c; }
-        if (stat.avgSat < minSat) { minSat = stat.avgSat; minSatCluster = c; }
-        if (stat.visitors > maxVol) { maxVol = stat.visitors; maxVolCluster = c; maxVolPct = stat.pct; }
-    });
-
-    // 2. Render Cluster Cards
-    const clusterColors = {
-        "Family Chill-Out": { bg: "bg-green-50", border: "border-green-500", text: "text-green-800" },
-        "Solo Explorer": { bg: "bg-yellow-50", border: "border-yellow-500", text: "text-yellow-800" },
-        "Festival Spenders": { bg: "bg-red-50", border: "border-red-500", text: "text-red-800" }
-    };
-
-    containerCards.innerHTML = '';
-    Object.keys(clusterStats).forEach(c => {
-        const stat = clusterStats[c];
-        const theme = clusterColors[c] || { bg: "bg-gray-50", border: "border-gray-500", text: "text-gray-800" };
-        
-        // Determine dominant style characteristic
-        let dominantStyle = "-";
-        let maxStyleVis = -1;
-        for(let style in stat.styles) {
-            if(stat.styles[style] > maxStyleVis) { maxStyleVis = stat.styles[style]; dominantStyle = style; }
-        }
-
-        containerCards.innerHTML += `
-            <div class="${theme.bg} p-5 rounded-xl border-l-4 ${theme.border} shadow-sm relative overflow-hidden">
-                <h4 class="font-bold text-lg ${theme.text} mb-2">${c}</h4>
-                <div class="grid grid-cols-2 gap-y-3 text-sm text-gray-700">
-                    <div><span class="block text-xs text-gray-500">จำนวนนักท่องเที่ยว</span><span class="font-bold">${stat.visitors.toLocaleString()} คน</span> (${stat.pct.toFixed(1)}%)</div>
-                    <div><span class="block text-xs text-gray-500">รายได้เฉลี่ยต่อหัว (ARPU)</span><span class="font-bold">${Math.round(stat.arpu).toLocaleString()} ฿</span></div>
-                    <div><span class="block text-xs text-gray-500">ความพึงพอใจ</span><span class="font-bold">⭐ ${stat.avgSat.toFixed(2)}</span></div>
-                    <div><span class="block text-xs text-gray-500">สไตล์เด่น</span><span class="font-bold bg-white px-2 py-0.5 rounded border border-gray-200 text-xs">${dominantStyle}</span></div>
-                </div>
-            </div>
-        `;
-    });
-
-    // 3. Render Insights (Automatically deduced from true data)
-    containerInsights.innerHTML = `
-        <ul class="list-disc pl-5 space-y-3 text-gray-700">
-            <li><strong>การสร้างรายได้ (Revenue):</strong> กลุ่ม <span class="text-blue-700 font-bold bg-blue-100 px-1 rounded">${maxArpuCluster}</span> เป็นกลุ่มที่มีอัตราการจ่ายต่อหัวเฉลี่ย (ARPU) สูงที่สุดที่ ${Math.round(maxArpu).toLocaleString()} บาท/คน ถือเป็นกลุ่มเป้าหมายมูลค่าสูง</li>
-            <li><strong>ปริมาณฐานลูกค้า (Volume):</strong> ฐานลูกค้าใหญ่ที่สุดในเงื่อนไขปัจจุบันคือกลุ่ม <span class="text-blue-700 font-bold bg-blue-100 px-1 rounded">${maxVolCluster}</span> ซึ่งกินสัดส่วนถึง ${maxVolPct.toFixed(1)}% ของนักท่องเที่ยวทั้งหมด</li>
-            <li><strong>จุดที่ควรระวัง (Satisfaction):</strong> กลุ่ม <span class="text-red-600 font-bold bg-red-50 px-1 rounded">${minSatCluster}</span> รายงานระดับความพึงพอใจต่ำที่สุดในบรรดาทุกกลุ่ม (เฉลี่ย ${minSat.toFixed(2)} ดาว) ควรเร่งหาสาเหตุและปรับปรุง</li>
-        </ul>
-    `;
-
-    // 4. Render DSS Recommendations
-    containerRecs.innerHTML = `
-        <div class="bg-blue-50 p-4 rounded-lg border border-blue-200 hover:shadow-md transition">
-            <h4 class="font-bold text-blue-900 mb-2 border-b border-blue-200 pb-1">🎯 การตลาด (Marketing)</h4>
-            <p class="text-gray-700 text-xs">มุ่งจัดทำแพ็กเกจท่องเที่ยวแบบพรีเมียม เจาะกลุ่ม <b>${maxArpuCluster}</b> โดยเฉพาะ เพื่อดึงดูดเม็ดเงินเข้าชุมชนให้มากขึ้น</p>
-        </div>
-        <div class="bg-green-50 p-4 rounded-lg border border-green-200 hover:shadow-md transition">
-            <h4 class="font-bold text-green-900 mb-2 border-b border-green-200 pb-1">📢 การโปรโมท (Promotion)</h4>
-            <p class="text-gray-700 text-xs">ใช้เนื้อหาที่โดนใจกลุ่ม <b>${maxVolCluster}</b> เพื่อสร้าง Viral ทางโซเชียล เนื่องจากเป็นฐานนักท่องเที่ยวที่ใหญ่ที่สุด</p>
-        </div>
-        <div class="bg-red-50 p-4 rounded-lg border border-red-200 hover:shadow-md transition">
-            <h4 class="font-bold text-red-900 mb-2 border-b border-red-200 pb-1">🛠️ บริหารจัดการ (Management)</h4>
-            <p class="text-gray-700 text-xs">สำรวจและแก้ไขปัญหาด้านสิ่งอำนวยความสะดวก เพื่อยกระดับความพึงพอใจของกลุ่ม <b>${minSatCluster}</b> อย่างเร่งด่วน</p>
-        </div>
-        <div class="bg-purple-50 p-4 rounded-lg border border-purple-200 hover:shadow-md transition">
-            <h4 class="font-bold text-purple-900 mb-2 border-b border-purple-200 pb-1">📊 ผลจากฟิลเตอร์ (DSS Logic)</h4>
-            <p class="text-gray-700 text-xs">ระบบดึงข้อมูลแบบ Real-time ตามเงื่อนไขที่คุณเลือก หากคุณเปลี่ยนกลุ่มเป้าหมายที่แท็บด้านบน กลยุทธ์จะคำนวณปรับเปลี่ยนให้ทันที</p>
-        </div>
-    `;
-
-    // 5. Draw Deep Dive Scatter Chart (ARPU vs Satisfaction)
-    drawDssScatterChart(data);
+    insightTextEl.innerHTML = `จากชุดข้อมูลที่เลือก <b>กลุ่ม ${topCluster}</b> มีรายได้เฉลี่ยต่อคน (ARPU) สูงที่สุด และ <b>${topLoc}</b> มีจำนวนผู้เข้าชมสูงที่สุดจากข้อมูลที่ถูกกรองครับ`;
 }
 
-function drawDssScatterChart(data) {
-    const ctx = document.getElementById('dssScatterChart').getContext('2d');
-    const clusterColors = {
-        "Family Chill-Out": "rgba(34, 197, 94, 0.8)",
-        "Solo Explorer": "rgba(234, 179, 8, 0.8)",
-        "Festival Spenders": "rgba(239, 68, 68, 0.8)"
-    };
-
-    const datasets = [];
-    const clusters = [...new Set(data.map(d => d.cluster))];
-
-    clusters.forEach(clusterName => {
-        // Here we map data to points: x = Satisfaction, y = ARPU
-        const clusterPoints = data.filter(d => d.cluster === clusterName).map(d => {
-            let arpu = d.visitors > 0 ? (d.revenue / d.visitors) : 0;
-            return {
-                x: d.satisfaction,
-                y: arpu,
-                location: d.location,
-                visitors: d.visitors
-            };
-        });
-
-        datasets.push({
-            label: clusterName,
-            data: clusterPoints,
-            backgroundColor: clusterColors[clusterName] || 'rgba(156, 163, 175, 0.8)',
-            pointRadius: (ctx) => {
-                // Size points by visitor volume relative to others
-                let v = ctx.raw ? ctx.raw.visitors : 10;
-                return Math.max(5, Math.min(25, v / 15)); // scale logic
-            },
-            pointHoverRadius: 12
-        });
-    });
-
-    if (dssScatterChartInstance) dssScatterChartInstance.destroy();
-
-    dssScatterChartInstance = new Chart(ctx, {
-        type: 'scatter',
-        data: { datasets: datasets },
-        options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            scales: {
-                x: { title: { display: true, text: 'คะแนนความพึงพอใจ (1-5 ดาว)' }, min: 1, max: 5 },
-                y: { title: { display: true, text: 'รายได้เฉลี่ยต่อหัว ARPU (บาท)' }, beginAtZero: true }
-            },
-            plugins: {
-                tooltip: {
-                    callbacks: {
-                        label: (ctx) => {
-                            const p = ctx.raw;
-                            return `[${p.location}] พอใจ: ${p.x}⭐ | ARPU: ${Math.round(p.y)}฿ | จำนวนคน: ${p.visitors}`;
-                        }
-                    }
-                }
-            }
-        }
-    });
-}
-
-
 // ==========================================
-// PHASE 2 & 1 REMAINDER CODE (UNTOUCHED)
+// MAP & ATTRACTIONS LOGIC
 // ==========================================
-
-function updateMap(data) {
+function updateMap(locationStats, totalMapVisitors) {
     if (!mapMarkersGroup) return;
     mapMarkersGroup.clearLayers();
     window.mapMarkers = {}; 
-
-    const locationStats = {};
-    let totalMapVisitors = 0;
-
-    data.forEach(row => {
-        if (!locationStats[row.location]) locationStats[row.location] = 0;
-        locationStats[row.location] += row.visitors;
-        totalMapVisitors += row.visitors;
-    });
 
     const activeLocationsCount = Object.keys(locationStats).length;
 
     let topLocationName = "-";
     let maxVisitors = -1;
-    for (const [loc, vis] of Object.entries(locationStats)) {
-        if (vis > maxVisitors) {
-            maxVisitors = vis;
-            topLocationName = loc;
-        }
+    for (const [loc, stat] of Object.entries(locationStats)) {
+        if (stat.visitors > maxVisitors) { maxVisitors = stat.visitors; topLocationName = loc; }
     }
 
     const summaryEl = document.getElementById('mapSummary');
     if (activeLocationsCount > 0) {
         summaryEl.innerHTML = `
-            <span class="inline-block mr-3">📍 สถานที่: <span class="text-blue-700">${activeLocationsCount} แห่ง</span></span>
-            <span class="inline-block mr-3">👥 นักท่องเที่ยว: <span class="text-blue-700">${totalMapVisitors.toLocaleString()} คน</span></span>
-            <span class="inline-block">🏆 ยอดนิยม: <span class="text-green-600">${topLocationName}</span></span>
+            <span class="inline-block mr-3">📍 สถานที่: <span class="text-blue-800">${activeLocationsCount} แห่ง</span></span>
+            <span class="inline-block mr-3">👥 นักท่องเที่ยว: <span class="text-blue-800">${totalMapVisitors.toLocaleString()} คน</span></span>
+            <span class="inline-block">🏆 ยอดนิยม: <span class="text-green-700">${topLocationName}</span></span>
         `;
     } else {
         summaryEl.innerHTML = `<span class="text-red-500">ไม่พบข้อมูลจาก Filter นี้</span>`;
@@ -346,20 +204,35 @@ function updateMap(data) {
     Object.keys(locationStats).forEach(locName => {
         const meta = locationDictionary[locName];
         if (meta) {
-            const visitorCount = locationStats[locName];
+            const stat = locationStats[locName];
+            const avgSat = stat.count > 0 ? (stat.sumSat / stat.count).toFixed(1) : "0.0";
+            
             const marker = L.marker([meta.lat, meta.lng]);
             window.mapMarkers[locName] = marker;
             
             const popupContent = `
-                <div style="width: 240px; font-family: 'Prompt', sans-serif;">
+                <div style="width: 250px; font-family: 'Prompt', sans-serif;">
                     <img src="${meta.img}" style="width: 100%; height: 140px; object-fit: cover; border-radius: 6px 6px 0 0; margin-bottom: 8px;" alt="${locName}" onerror="this.src='https://via.placeholder.com/300x200?text=Not+Found'">
                     <div style="padding: 0 4px;">
-                        <h4 style="font-weight: bold; font-size: 16px; color: #1e3a8a; margin: 0 0 6px 0; line-height: 1.2;">${locName}</h4>
-                        <p style="font-size: 13px; color: #4b5563; margin: 0 0 4px 0;">📍 อำเภอ${meta.district}</p>
+                        <h4 style="font-weight: bold; font-size: 16px; color: #1e3a8a; margin: 0 0 6px 0; line-height: 1.2;">📍 ${locName}</h4>
                         <p style="font-size: 13px; color: #4b5563; margin: 0 0 8px 0;">🏛️ ${meta.type}</p>
-                        <div style="background-color: #eff6ff; color: #1d4ed8; font-weight: 600; font-size: 13px; padding: 6px; border-radius: 4px; text-align: center; margin-bottom: 10px; border: 1px solid #bfdbfe;">
-                            👥 นักท่องเที่ยว: ${visitorCount.toLocaleString()} คน
+                        
+                        <!-- Added Revenue and Satisfaction in Map Popup -->
+                        <div style="background-color: #f8fafc; font-size: 12px; padding: 6px; border-radius: 4px; margin-bottom: 10px; border: 1px solid #e2e8f0;">
+                            <div style="display: flex; justify-content: space-between; margin-bottom: 4px;">
+                                <span style="color: #475569;">👥 ผู้เข้าชม:</span>
+                                <span style="font-weight: bold; color: #1d4ed8;">${stat.visitors.toLocaleString()} คน</span>
+                            </div>
+                            <div style="display: flex; justify-content: space-between; margin-bottom: 4px;">
+                                <span style="color: #475569;">💰 รายได้รวม:</span>
+                                <span style="font-weight: bold; color: #15803d;">฿${stat.revenue.toLocaleString()}</span>
+                            </div>
+                            <div style="display: flex; justify-content: space-between;">
+                                <span style="color: #475569;">⭐ ความพอใจ:</span>
+                                <span style="font-weight: bold; color: #b45309;">${avgSat} / 5</span>
+                            </div>
                         </div>
+
                         <button style="width: 100%; background-color: #2563eb; color: white; border: none; padding: 8px; border-radius: 4px; font-size: 13px; font-weight: bold; cursor: pointer; transition: background-color 0.2s;"
                                 onmouseover="this.style.backgroundColor='#1d4ed8'" onmouseout="this.style.backgroundColor='#2563eb'"
                                 onclick="openAttractionDetail('${locName}')">
@@ -369,50 +242,58 @@ function updateMap(data) {
                 </div>
             `;
             
-            marker.bindPopup(popupContent, { minWidth: 250, maxWidth: 260 });
+            marker.bindPopup(popupContent, { minWidth: 260, maxWidth: 280 });
             mapMarkersGroup.addLayer(marker);
         }
     });
 }
 
-function renderAttractions(filteredData) {
-    const locationStats = {};
-    filteredData.forEach(row => {
-        if (!locationStats[row.location]) locationStats[row.location] = 0;
-        locationStats[row.location] += row.visitors;
-    });
-
+function renderAttractions(locationStats) {
     const grid = document.getElementById('attractionsGrid');
     grid.innerHTML = '';
 
     Object.keys(locationDictionary).forEach(locName => {
         const meta = locationDictionary[locName];
-        const visitorCount = locationStats[locName] || 0;
+        const stat = locationStats[locName] || { visitors: 0, revenue: 0, sumSat: 0, count: 0 };
+        const avgSat = stat.count > 0 ? (stat.sumSat / stat.count).toFixed(1) : "0.0";
 
         const card = document.createElement('div');
-        card.className = "bg-white rounded-xl shadow border border-gray-100 overflow-hidden hover:shadow-lg transition-shadow flex flex-col";
+        card.className = "bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden hover:shadow-md transition-shadow flex flex-col";
         
         card.innerHTML = `
-            <div class="h-40 overflow-hidden relative bg-gray-200">
+            <div class="h-44 overflow-hidden relative bg-gray-200">
                 <img src="${meta.img}" class="w-full h-full object-cover" alt="${locName}" onerror="this.src='https://via.placeholder.com/400x200?text=No+Image'">
                 <div class="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 to-transparent p-4 pt-12">
                     <h4 class="font-bold text-white text-lg leading-tight truncate" title="${locName}">${locName}</h4>
                 </div>
             </div>
             <div class="p-4 flex-grow flex flex-col">
-                <div class="text-sm text-gray-600 space-y-1 mb-4 flex-grow">
+                <div class="text-sm text-gray-600 space-y-1 mb-4 flex-grow border-b border-gray-100 pb-3">
                     <p>📍 อำเภอ${meta.district}</p>
                     <p>🏛️ ${meta.type}</p>
-                    <p class="font-semibold text-blue-800 bg-blue-50 px-2 py-1 rounded inline-block mt-2 border border-blue-100">
-                        👥 นักท่องเที่ยว: ${visitorCount.toLocaleString()} คน
-                    </p>
                 </div>
+                <!-- Added KPIs to Card -->
+                <div class="grid grid-cols-2 gap-2 text-xs mb-4">
+                    <div class="bg-blue-50 p-2 rounded text-center border border-blue-100">
+                        <span class="block text-gray-500 mb-0.5">👥 ผู้เข้าชม</span>
+                        <span class="font-bold text-blue-800">${stat.visitors.toLocaleString()} คน</span>
+                    </div>
+                    <div class="bg-green-50 p-2 rounded text-center border border-green-100">
+                        <span class="block text-gray-500 mb-0.5">💰 รายได้</span>
+                        <span class="font-bold text-green-700">฿${stat.revenue.toLocaleString()}</span>
+                    </div>
+                    <div class="col-span-2 bg-yellow-50 p-2 rounded text-center border border-yellow-100">
+                        <span class="text-gray-500">⭐ ความพึงพอใจ: </span>
+                        <span class="font-bold text-yellow-700">${avgSat} / 5</span>
+                    </div>
+                </div>
+                
                 <div class="grid grid-cols-2 gap-2 mt-auto">
-                    <button onclick="openAttractionDetail('${locName}')" class="bg-gray-100 hover:bg-gray-200 text-gray-700 text-xs font-semibold py-2 rounded transition-colors flex items-center justify-center">
-                        📄 รายละเอียด
+                    <button onclick="openAttractionDetail('${locName}')" class="bg-white border border-gray-300 hover:bg-gray-50 text-gray-700 text-xs font-bold py-2 rounded transition-colors flex items-center justify-center shadow-sm">
+                        📄 ดูรายละเอียด
                     </button>
-                    <button onclick="focusOnMap('${locName}')" class="bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold py-2 rounded transition-colors flex items-center justify-center">
-                        📍 ดูแผนที่
+                    <button onclick="focusOnMap('${locName}')" class="bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold py-2 rounded transition-colors flex items-center justify-center shadow-sm">
+                        📍 ดูบนแผนที่
                     </button>
                 </div>
             </div>
@@ -425,11 +306,12 @@ function openAttractionDetail(locName) {
     const meta = locationDictionary[locName];
     if (!meta) return;
 
+    // Recalculate based on current global filter state strictly
     const festivalFilter = document.getElementById('filterFestival').value;
     const styleFilter = document.getElementById('filterStyle').value;
     const scoreFilter = document.getElementById('filterScore').value;
     
-    let visitorCount = 0;
+    let stat = { vis: 0, rev: 0, sumSat: 0, count: 0 };
     rawData.forEach(row => {
         if (row.location === locName) {
             let passFestival = festivalFilter === 'all' ? true : row.isFestival.toString() === festivalFilter;
@@ -439,16 +321,27 @@ function openAttractionDetail(locName) {
             else if (scoreFilter === 'med') passScore = row.satisfaction >= 3.0 && row.satisfaction < 4.0;
             else if (scoreFilter === 'low') passScore = row.satisfaction < 3.0;
             
-            if (passFestival && passStyle && passScore) visitorCount += row.visitors;
+            if (passFestival && passStyle && passScore) {
+                stat.vis += row.visitors;
+                stat.rev += row.revenue;
+                stat.sumSat += row.satisfaction;
+                stat.count += 1;
+            }
         }
     });
+
+    const avgSat = stat.count > 0 ? (stat.sumSat / stat.count).toFixed(1) : "0.0";
 
     document.getElementById('modalImg').src = meta.img;
     document.getElementById('modalTitle').innerText = locName;
     document.getElementById('modalDistrict').innerText = meta.district;
     document.getElementById('modalType').innerText = meta.type;
-    document.getElementById('modalCoords').innerText = `${meta.lat}, ${meta.lng}`;
-    document.getElementById('modalVisitors').innerText = `${visitorCount.toLocaleString()} คน`;
+    
+    // Updated Modal KPIs
+    document.getElementById('modalVisitors').innerText = `${stat.vis.toLocaleString()}`;
+    document.getElementById('modalRevenue').innerText = `฿${stat.rev.toLocaleString()}`;
+    document.getElementById('modalSatisfaction').innerText = `${avgSat} / 5`;
+    
     document.getElementById('modalSource').innerText = meta.source;
     document.getElementById('modalMapBtn').onclick = () => focusOnMap(locName);
 
@@ -470,6 +363,189 @@ function focusOnMap(locName) {
         }
     }, 300);
 }
+
+// ==========================================
+// PHASE 3: DATA MINING & DSS LOGIC (UPDATED RULE-BASED)
+// ==========================================
+function renderDataMining(data) {
+    const containerCards = document.getElementById('dssClusterCards');
+    const containerRecs = document.getElementById('dssRecommendations');
+
+    if (data.length === 0) {
+        containerCards.innerHTML = '<div class="col-span-full text-red-500 bg-red-50 p-4 rounded text-center">ไม่พบข้อมูลตามเงื่อนไข Filter ปัจจุบัน กรุณาปรับเปลี่ยน Filter</div>';
+        containerRecs.innerHTML = '';
+        if (dssScatterChartInstance) dssScatterChartInstance.destroy();
+        return;
+    }
+
+    const clusterStats = {};
+    let totalVis = 0;
+    let systemRevenue = 0;
+
+    data.forEach(row => {
+        if (!clusterStats[row.cluster]) {
+            clusterStats[row.cluster] = { visitors: 0, revenue: 0, sumSat: 0, count: 0 };
+        }
+        clusterStats[row.cluster].visitors += row.visitors;
+        clusterStats[row.cluster].revenue += row.revenue;
+        clusterStats[row.cluster].sumSat += row.satisfaction;
+        clusterStats[row.cluster].count += 1;
+        totalVis += row.visitors;
+        systemRevenue += row.revenue;
+    });
+
+    const avgSystemArpu = totalVis > 0 ? (systemRevenue / totalVis) : 0;
+    const avgSystemVis = totalVis / Object.keys(clusterStats).length;
+    let sumSystemSat = 0; let countSystemSat = 0;
+    Object.values(clusterStats).forEach(s => { sumSystemSat += s.sumSat; countSystemSat += s.count; });
+    const avgSystemSat = countSystemSat > 0 ? (sumSystemSat / countSystemSat) : 0;
+
+    // Render Cards
+    containerCards.innerHTML = '';
+    let recsHTML = ``;
+
+    Object.keys(clusterStats).forEach(c => {
+        const stat = clusterStats[c];
+        stat.arpu = stat.visitors > 0 ? (stat.revenue / stat.visitors) : 0;
+        stat.avgSat = stat.count > 0 ? (stat.sumSat / stat.count) : 0;
+        stat.pct = totalVis > 0 ? (stat.visitors / totalVis) * 100 : 0;
+
+        // Generate specific descriptive traits based on real data calculation
+        let traitDescription = "";
+        if (stat.arpu > avgSystemArpu) {
+            traitDescription += "มีการใช้จ่ายเฉลี่ยสูง ";
+        } else {
+            traitDescription += "เน้นการเดินทางแบบประหยัด ";
+        }
+        if (stat.visitors > avgSystemVis) {
+            traitDescription += "และเป็นกลุ่มที่มีปริมาณคนจำนวนมาก";
+        } else {
+            traitDescription += "และเป็นกลุ่มเฉพาะ (Niche)";
+        }
+
+        containerCards.innerHTML += `
+            <div class="bg-white p-5 rounded-xl border border-gray-200 shadow-sm relative overflow-hidden">
+                <h4 class="font-bold text-lg text-blue-900 mb-1 border-b border-gray-100 pb-2">${c}</h4>
+                <div class="text-xs text-gray-500 font-semibold mb-4 bg-gray-100 px-2 py-1 rounded inline-block">${stat.visitors.toLocaleString()} คน (${stat.pct.toFixed(1)}%)</div>
+                
+                <div class="grid grid-cols-1 gap-y-2 text-sm text-gray-700 mb-4">
+                    <div class="flex justify-between items-center bg-gray-50 p-2 rounded">
+                        <span class="text-gray-500">รายได้เฉลี่ยต่อคน:</span>
+                        <span class="font-bold text-green-700">฿${Math.round(stat.arpu).toLocaleString()}</span>
+                    </div>
+                    <div class="flex justify-between items-center bg-gray-50 p-2 rounded">
+                        <span class="text-gray-500">ความพึงพอใจเฉลี่ย:</span>
+                        <span class="font-bold text-yellow-600">${stat.avgSat.toFixed(2)} / 5</span>
+                    </div>
+                </div>
+                
+                <div class="text-xs text-gray-600 border-t border-dashed pt-3">
+                    <span class="font-bold text-gray-800 block mb-1">ลักษณะสำคัญ:</span>
+                    ${traitDescription}
+                </div>
+            </div>
+        `;
+
+        // ----------------------------------------------------
+        // Rule-Based Decision Support (Dynamic Recommendation)
+        // ----------------------------------------------------
+        let action = "";
+        let theme = "bg-gray-50 border-gray-200 text-gray-800";
+        let icon = "💡";
+        
+        if (stat.arpu > avgSystemArpu && stat.visitors <= avgSystemVis) {
+            action = `รายได้เฉลี่ยต่อคนสูง (฿${Math.round(stat.arpu).toLocaleString()}) แต่ยังมีจำนวนผู้เข้าชมน้อย: <b>ควรส่งเสริมการตลาดและโปรโมชันเพื่อเพิ่มจำนวนผู้เข้าชมเจาะกลุ่ม ${c}</b>`;
+            theme = "bg-blue-50 border-blue-200 text-blue-900";
+            icon = "🎯";
+        } else if (stat.visitors > avgSystemVis && stat.avgSat < avgSystemSat) {
+            action = `จำนวนผู้เข้าชมสูง แต่ความพึงพอใจเฉลี่ยค่อนข้างต่ำ (${stat.avgSat.toFixed(2)}/5): <b>ควรเร่งปรับปรุงคุณภาพการให้บริการและสิ่งอำนวยความสะดวกสำหรับกลุ่ม ${c}</b>`;
+            theme = "bg-red-50 border-red-200 text-red-900";
+            icon = "🛠️";
+        } else if (stat.arpu > avgSystemArpu && stat.visitors > avgSystemVis) {
+            action = `เป็นกลุ่มแกนหลักที่ทำรายได้และปริมาณสูง: <b>ควรรักษามาตรฐาน บริหารจัดการคน และเพิ่มกิจกรรมสร้างมูลค่าเพื่อกลุ่ม ${c}</b>`;
+            theme = "bg-green-50 border-green-200 text-green-900";
+            icon = "🌟";
+        } else {
+            action = `กลุ่มผู้เยี่ยมชมทั่วไป: <b>ควรส่งเสริมการท่องเที่ยวในช่วงนอกเทศกาลเพื่อดึงดูดกลุ่ม ${c} ให้กระจายรายได้เข้าพื้นที่</b>`;
+            theme = "bg-purple-50 border-purple-200 text-purple-900";
+            icon = "📢";
+        }
+
+        recsHTML += `
+            <div class="${theme} p-4 rounded-lg border hover:shadow-md transition">
+                <div class="flex items-start gap-2">
+                    <span class="text-lg">${icon}</span>
+                    <p class="text-sm leading-relaxed">${action}</p>
+                </div>
+            </div>
+        `;
+    });
+
+    containerRecs.innerHTML = recsHTML;
+    drawDssScatterChart(data);
+}
+
+function drawDssScatterChart(data) {
+    const ctx = document.getElementById('dssScatterChart').getContext('2d');
+    const clusterColors = {
+        "Family Chill-Out": "rgba(34, 197, 94, 0.8)",
+        "Solo Explorer": "rgba(234, 179, 8, 0.8)",
+        "Festival Spenders": "rgba(239, 68, 68, 0.8)"
+    };
+
+    const datasets = [];
+    const clusters = [...new Set(data.map(d => d.cluster))];
+
+    clusters.forEach(clusterName => {
+        const clusterPoints = data.filter(d => d.cluster === clusterName).map(d => {
+            let arpu = d.visitors > 0 ? (d.revenue / d.visitors) : 0;
+            return {
+                x: d.satisfaction,
+                y: arpu,
+                location: d.location,
+                visitors: d.visitors
+            };
+        });
+
+        datasets.push({
+            label: clusterName,
+            data: clusterPoints,
+            backgroundColor: clusterColors[clusterName] || 'rgba(156, 163, 175, 0.8)',
+            pointRadius: (ctx) => {
+                let v = ctx.raw ? ctx.raw.visitors : 10;
+                return Math.max(5, Math.min(25, v / 15));
+            },
+            pointHoverRadius: 12
+        });
+    });
+
+    if (dssScatterChartInstance) dssScatterChartInstance.destroy();
+
+    dssScatterChartInstance = new Chart(ctx, {
+        type: 'scatter',
+        data: { datasets: datasets },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: {
+                x: { title: { display: true, text: 'คะแนนความพึงพอใจ (1-5 ดาว)' }, min: 1, max: 5 },
+                y: { title: { display: true, text: 'รายได้เฉลี่ยต่อคน (ARPU)' }, beginAtZero: true }
+            },
+            plugins: {
+                tooltip: {
+                    callbacks: {
+                        label: (ctx) => `[${ctx.raw.location}] พอใจ: ${ctx.raw.x}⭐ | ARPU: ฿${Math.round(ctx.raw.y)} | คน: ${ctx.raw.visitors}`
+                    }
+                }
+            }
+        }
+    });
+}
+
+
+// ==========================================
+// EXISTING CHART & KPI LOGIC
+// ==========================================
 
 function updateKPIs(data) {
     if (data.length === 0) {
@@ -535,8 +611,8 @@ function drawClusterChart(data) {
         data: { datasets: datasets },
         options: {
             responsive: true,
-            scales: { x: { title: { display: true, text: 'คะแนนความพึงพอใจ (1-5)' }, min: 1, max: 5 }, y: { title: { display: true, text: 'รายได้ (บาท)' }, beginAtZero: true } },
-            plugins: { tooltip: { callbacks: { label: (ctx) => `พอใจ: ${ctx.raw.x}, รายได้: ${ctx.raw.y}฿ (${ctx.raw.location})` } } }
+            scales: { x: { title: { display: true, text: 'คะแนนความพึงพอใจ (1-5)' }, min: 1, max: 5 }, y: { title: { display: true, text: 'รายได้รวมของรายการ (บาท)' }, beginAtZero: true } },
+            plugins: { tooltip: { callbacks: { label: (ctx) => `พอใจ: ${ctx.raw.x}, รายได้: ฿${ctx.raw.y.toLocaleString()} (${ctx.raw.location})` } } }
         }
     });
 }
@@ -553,13 +629,13 @@ function renderReviews(data) {
         let borderColor = row.satisfaction >= 4.0 ? 'border-green-500' : (row.satisfaction >= 3.0 ? 'border-yellow-500' : 'border-red-500');
         let starColor = row.satisfaction >= 4.0 ? 'text-green-600' : (row.satisfaction >= 3.0 ? 'text-yellow-600' : 'text-red-600');
         const div = document.createElement('div');
-        div.className = `p-4 bg-gray-50 rounded-lg border-l-4 ${borderColor} flex justify-between items-start gap-4 hover:bg-gray-100`;
+        div.className = `p-4 bg-gray-50 rounded-lg border-l-4 ${borderColor} flex justify-between items-start gap-4 hover:bg-gray-100 transition`;
         div.innerHTML = `
             <div>
                 <p class="text-sm font-semibold text-gray-800">${row.location} <span class="text-xs text-gray-500 font-normal ml-2 bg-gray-200 px-2 py-1 rounded-full">${row.travelStyle} | ${row.month}</span></p>
                 <p class="text-sm text-gray-700 mt-2 italic">"${row.review}"</p>
             </div>
-            <div class="text-right whitespace-nowrap bg-white px-3 py-1 rounded-full border border-gray-100">
+            <div class="text-right whitespace-nowrap bg-white px-3 py-1 rounded-full border border-gray-100 shadow-sm">
                 <span class="font-bold ${starColor}">⭐ ${row.satisfaction.toFixed(1)}</span>
             </div>
         `;
