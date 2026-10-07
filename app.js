@@ -8,7 +8,7 @@ let dssScatterChartInstance = null;
 let tourismMap = null;
 let mapMarkersGroup = null;
 
-// Location Meta Data (Actual data from previous phase)
+// 11 Locations Dictionary (Matching user's list + existing)
 const locationDictionary = {
     "ลานพญาศรีสัตตนาคราช": {
         lat: 17.3995, lng: 104.7937,
@@ -16,7 +16,7 @@ const locationDictionary = {
         img: "https://upload.wikimedia.org/wikipedia/commons/f/f7/Phaya_Si_Sattanakharat.jpg",
         source: "Wikimedia Commons"
     },
-    "วัดพระธาตุพนม": {
+    "วัดพระธาตุพนมวรมหาวิหาร": {
         lat: 16.9416, lng: 104.7231,
         type: "ศาสนสถานสำคัญ", district: "ธาตุพนม",
         img: "https://upload.wikimedia.org/wikipedia/commons/c/cd/Wat_Phra_That_Phanom2.jpg",
@@ -25,12 +25,54 @@ const locationDictionary = {
     "ถนนคนเดินนครพนม": {
         lat: 17.4068, lng: 104.7891,
         type: "แหล่งช้อปปิ้ง / ตลาด", district: "เมืองนครพนม",
-        img: "https://upload.wikimedia.org/wikipedia/commons/1/10/Nakhon_Phanom_Clock_Tower.jpg",
-        source: "Wikimedia Commons"
+        img: "",
+        source: "-"
     },
     "ชุมชนไทญ้อ": {
         lat: 17.0544, lng: 104.6783,
         type: "ชุมชนวัฒนธรรม", district: "เรณูนคร",
+        img: "",
+        source: "-"
+    },
+    "วัดนักบุญอันนา หนองแสง": {
+        lat: 17.4191, lng: 104.7818,
+        type: "ศาสนสถาน (โบสถ์คริสต์)", district: "เมืองนครพนม",
+        img: "",
+        source: "-"
+    },
+    "หอนาฬิกาเวียดนามอนุสรณ์": {
+        lat: 17.4055, lng: 104.7885,
+        type: "แลนด์มาร์กประวัติศาสตร์", district: "เมืองนครพนม",
+        img: "https://upload.wikimedia.org/wikipedia/commons/1/10/Nakhon_Phanom_Clock_Tower.jpg",
+        source: "Wikimedia Commons"
+    },
+    "บ้านลุงโฮจิมินห์ (บ้านนาจอก)": {
+        lat: 17.3822, lng: 104.7538,
+        type: "สถานที่ประวัติศาสตร์", district: "เมืองนครพนม",
+        img: "",
+        source: "-"
+    },
+    "พิพิธภัณฑ์จวนผู้ว่าราชการจังหวัดนครพนม (หลังเก่า)": {
+        lat: 17.4095, lng: 104.7850,
+        type: "พิพิธภัณฑ์", district: "เมืองนครพนม",
+        img: "",
+        source: "-"
+    },
+    "เส้นทางจักรยานริมแม่น้ำโขง (River Walk)": {
+        lat: 17.4150, lng: 104.7830,
+        type: "สถานที่พักผ่อน / กีฬา", district: "เมืองนครพนม",
+        img: "",
+        source: "-"
+    },
+    "อุทยานแห่งชาติภูลังกา": {
+        lat: 17.9350, lng: 104.1480,
+        type: "อุทยานแห่งชาติ", district: "บ้านแพง",
+        img: "https://upload.wikimedia.org/wikipedia/commons/9/9f/%E0%B8%AD%E0%B8%B8%E0%B8%97%E0%B8%A2%E0%B8%B2%E0%B8%99%E0%B9%81%E0%B8%AB%E0%B9%88%E0%B8%87%E0%B8%8A%E0%B8%B2%E0%B8%95%E0%B8%B4%E0%B8%A0%E0%B8%B9%E0%B8%A5%E0%B8%B1%E0%B8%87%E0%B8%81%E0%B8%B2-%E0%B8%99%E0%B8%84%E0%B8%A3%E0%B8%9E%E0%B8%99%E0%B8%A1-2-600x360.jpg",
+        source: "Wikimedia Commons"
+    },
+    "วัดพระธาตุเรณู": {
+        lat: 17.0544, lng: 104.6783,
+        type: "ศาสนสถานสำคัญ", district: "เรณูนคร",
         img: "https://upload.wikimedia.org/wikipedia/commons/5/52/Phra_That_Renu_Nakhon.jpg",
         source: "Wikimedia Commons"
     }
@@ -80,9 +122,9 @@ async function initDashboard() {
 }
 
 function initMap() {
-    tourismMap = L.map('tourismMap').setView([17.15, 104.75], 10);
+    tourismMap = L.map('tourismMap').setView([17.25, 104.55], 9);
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-        attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+        attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
     }).addTo(tourismMap);
     mapMarkersGroup = L.layerGroup().addTo(tourismMap);
 }
@@ -109,13 +151,11 @@ function updateDashboard() {
         return passFestival && passStyle && passScore;
     });
 
-    // 1. UI Rule: Show Record Count
     const countEl = document.getElementById('recordCount');
     if (countEl) {
         countEl.innerText = `แสดงข้อมูล ${filteredData.length} จาก ${rawData.length} รายการ`;
     }
 
-    // 2. Pre-aggregate Location Stats for Map & Attractions & Dashboard Insights
     const locationStats = {};
     let totalMapVisitors = 0;
     
@@ -152,13 +192,11 @@ function generateDashboardInsight(data, locationStats) {
         return;
     }
 
-    // Find top location by visitors
     let topLoc = "-"; let maxVis = -1;
     for (const [loc, stat] of Object.entries(locationStats)) {
         if (stat.visitors > maxVis) { maxVis = stat.visitors; topLoc = loc; }
     }
 
-    // Find top cluster by ARPU
     const cStats = {};
     data.forEach(r => {
         if (!cStats[r.cluster]) cStats[r.cluster] = { vis: 0, rev: 0 };
@@ -210,14 +248,18 @@ function updateMap(locationStats, totalMapVisitors) {
             const marker = L.marker([meta.lat, meta.lng]);
             window.mapMarkers[locName] = marker;
             
+            // Handle missing image safely without URL fetch error
+            const imgHtml = meta.img 
+                ? `<img src="${meta.img}" style="width: 100%; height: 140px; object-fit: cover; border-radius: 6px 6px 0 0; margin-bottom: 8px;" alt="${locName}">`
+                : `<div style="width: 100%; height: 140px; background: linear-gradient(135deg, #1e3a8a, #3b82f6); border-radius: 6px 6px 0 0; margin-bottom: 8px; display: flex; align-items: center; justify-content: center; color: white; font-weight: bold; font-size: 14px; text-align: center; padding: 10px; box-sizing: border-box;">${locName}</div>`;
+
             const popupContent = `
                 <div style="width: 250px; font-family: 'Prompt', sans-serif;">
-                    <img src="${meta.img}" style="width: 100%; height: 140px; object-fit: cover; border-radius: 6px 6px 0 0; margin-bottom: 8px;" alt="${locName}" onerror="this.src='https://via.placeholder.com/300x200?text=Not+Found'">
+                    ${imgHtml}
                     <div style="padding: 0 4px;">
                         <h4 style="font-weight: bold; font-size: 16px; color: #1e3a8a; margin: 0 0 6px 0; line-height: 1.2;">📍 ${locName}</h4>
                         <p style="font-size: 13px; color: #4b5563; margin: 0 0 8px 0;">🏛️ ${meta.type}</p>
                         
-                        <!-- Added Revenue and Satisfaction in Map Popup -->
                         <div style="background-color: #f8fafc; font-size: 12px; padding: 6px; border-radius: 4px; margin-bottom: 10px; border: 1px solid #e2e8f0;">
                             <div style="display: flex; justify-content: space-between; margin-bottom: 4px;">
                                 <span style="color: #475569;">👥 ผู้เข้าชม:</span>
@@ -257,12 +299,18 @@ function renderAttractions(locationStats) {
         const stat = locationStats[locName] || { visitors: 0, revenue: 0, sumSat: 0, count: 0 };
         const avgSat = stat.count > 0 ? (stat.sumSat / stat.count).toFixed(1) : "0.0";
 
+        const imgHtml = meta.img
+            ? `<img src="${meta.img}" class="w-full h-full object-cover" alt="${locName}">`
+            : `<div class="w-full h-full bg-gradient-to-br from-blue-800 to-indigo-600 flex items-center justify-center p-4 text-center">
+                 <span class="text-white font-bold text-xl drop-shadow-md">${locName}</span>
+               </div>`;
+
         const card = document.createElement('div');
         card.className = "bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden hover:shadow-md transition-shadow flex flex-col";
         
         card.innerHTML = `
             <div class="h-44 overflow-hidden relative bg-gray-200">
-                <img src="${meta.img}" class="w-full h-full object-cover" alt="${locName}" onerror="this.src='https://via.placeholder.com/400x200?text=No+Image'">
+                ${imgHtml}
                 <div class="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 to-transparent p-4 pt-12">
                     <h4 class="font-bold text-white text-lg leading-tight truncate" title="${locName}">${locName}</h4>
                 </div>
@@ -272,7 +320,7 @@ function renderAttractions(locationStats) {
                     <p>📍 อำเภอ${meta.district}</p>
                     <p>🏛️ ${meta.type}</p>
                 </div>
-                <!-- Added KPIs to Card -->
+                
                 <div class="grid grid-cols-2 gap-2 text-xs mb-4">
                     <div class="bg-blue-50 p-2 rounded text-center border border-blue-100">
                         <span class="block text-gray-500 mb-0.5">👥 ผู้เข้าชม</span>
@@ -306,7 +354,6 @@ function openAttractionDetail(locName) {
     const meta = locationDictionary[locName];
     if (!meta) return;
 
-    // Recalculate based on current global filter state strictly
     const festivalFilter = document.getElementById('filterFestival').value;
     const styleFilter = document.getElementById('filterStyle').value;
     const scoreFilter = document.getElementById('filterScore').value;
@@ -332,12 +379,23 @@ function openAttractionDetail(locName) {
 
     const avgSat = stat.count > 0 ? (stat.sumSat / stat.count).toFixed(1) : "0.0";
 
-    document.getElementById('modalImg').src = meta.img;
+    const imgEl = document.getElementById('modalImg');
+    const fallbackEl = document.getElementById('modalFallbackText');
+    
+    if (meta.img) {
+        imgEl.src = meta.img;
+        imgEl.style.display = 'block';
+        fallbackEl.style.display = 'none';
+    } else {
+        imgEl.style.display = 'none';
+        fallbackEl.style.display = 'flex';
+        fallbackEl.innerText = locName;
+    }
+
     document.getElementById('modalTitle').innerText = locName;
     document.getElementById('modalDistrict').innerText = meta.district;
     document.getElementById('modalType').innerText = meta.type;
     
-    // Updated Modal KPIs
     document.getElementById('modalVisitors').innerText = `${stat.vis.toLocaleString()}`;
     document.getElementById('modalRevenue').innerText = `฿${stat.rev.toLocaleString()}`;
     document.getElementById('modalSatisfaction').innerText = `${avgSat} / 5`;
@@ -365,7 +423,7 @@ function focusOnMap(locName) {
 }
 
 // ==========================================
-// PHASE 3: DATA MINING & DSS LOGIC (UPDATED RULE-BASED)
+// PHASE 3: DATA MINING & DSS LOGIC
 // ==========================================
 function renderDataMining(data) {
     const containerCards = document.getElementById('dssClusterCards');
@@ -400,7 +458,6 @@ function renderDataMining(data) {
     Object.values(clusterStats).forEach(s => { sumSystemSat += s.sumSat; countSystemSat += s.count; });
     const avgSystemSat = countSystemSat > 0 ? (sumSystemSat / countSystemSat) : 0;
 
-    // Render Cards
     containerCards.innerHTML = '';
     let recsHTML = ``;
 
@@ -410,7 +467,6 @@ function renderDataMining(data) {
         stat.avgSat = stat.count > 0 ? (stat.sumSat / stat.count) : 0;
         stat.pct = totalVis > 0 ? (stat.visitors / totalVis) * 100 : 0;
 
-        // Generate specific descriptive traits based on real data calculation
         let traitDescription = "";
         if (stat.arpu > avgSystemArpu) {
             traitDescription += "มีการใช้จ่ายเฉลี่ยสูง ";
@@ -446,9 +502,6 @@ function renderDataMining(data) {
             </div>
         `;
 
-        // ----------------------------------------------------
-        // Rule-Based Decision Support (Dynamic Recommendation)
-        // ----------------------------------------------------
         let action = "";
         let theme = "bg-gray-50 border-gray-200 text-gray-800";
         let icon = "💡";
