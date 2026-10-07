@@ -642,11 +642,17 @@ function renderDataMining(data) {
 function drawDssScatterChart(data) {
     const ctx = document.getElementById('dssScatterChart').getContext('2d');
     
-    // Matches the sunset colors
+    // Matches the sunset colors with lower opacity for dense scatter plotting
     const clusterColors = {
-        "Family Chill-Out": "rgba(249, 115, 22, 0.8)",  // Sunset Orange
-        "Solo Explorer": "rgba(96, 165, 250, 0.8)",     // Sky Blue
-        "Festival Spenders": "rgba(192, 132, 252, 0.8)" // Twilight Purple
+        "Family Chill-Out": "rgba(249, 115, 22, 0.3)",  // Sunset Orange (lower opacity)
+        "Solo Explorer": "rgba(96, 165, 250, 0.3)",     // Sky Blue (lower opacity)
+        "Festival Spenders": "rgba(192, 132, 252, 0.3)" // Twilight Purple (lower opacity)
+    };
+
+    const borderColors = {
+        "Family Chill-Out": "rgba(249, 115, 22, 0.8)",  // Sunset Orange border
+        "Solo Explorer": "rgba(96, 165, 250, 0.8)",     // Sky Blue border
+        "Festival Spenders": "rgba(192, 132, 252, 0.8)" // Twilight Purple border
     };
 
     const datasets = [];
@@ -667,13 +673,14 @@ function drawDssScatterChart(data) {
             label: clusterName,
             data: clusterPoints,
             backgroundColor: clusterColors[clusterName] || colors.muted,
-            borderColor: clusterColors[clusterName] ? clusterColors[clusterName].replace('0.8', '1') : colors.muted,
+            borderColor: borderColors[clusterName] || colors.muted,
             borderWidth: 1,
             pointRadius: (ctx) => {
                 let v = ctx.raw ? ctx.raw.visitors : 10;
-                return Math.max(4, Math.min(22, v / 12));
+                // Scale radius much smaller (2 to 6) since we have 1500 points
+                return Math.max(2, Math.min(6, v / 50));
             },
-            pointHoverRadius: 10
+            pointHoverRadius: 8
         });
     });
 
