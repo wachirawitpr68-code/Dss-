@@ -1,78 +1,76 @@
 const fs = require('fs');
 
 const locations = [
-    "วัดพระธาตุพนมวรมหาวิหาร", 
-    "ลานพญาศรีสัตตนาคราช", 
-    "ถนนคนเดินนครพนม", 
-    "ชุมชนไทญ้อ",
-    "วัดนักบุญอันนา หนองแสง",
-    "หอนาฬิกาเวียดนามอนุสรณ์",
-    "บ้านลุงโฮจิมินห์ (บ้านนาจอก)",
-    "พิพิธภัณฑ์จวนผู้ว่าราชการจังหวัดนครพนม (หลังเก่า)",
-    "เส้นทางจักรยานริมแม่น้ำโขง (River Walk)",
-    "อุทยานแห่งชาติภูลังกา",
-    "วัดพระธาตุเรณู"
+    "ลานพญาศรีสัตตนาคราช", "วัดพระธาตุพนมวรมหาวิหาร", "ถนนคนเดินนครพนม",
+    "ชุมชนไทญ้อ", "วัดนักบุญอันนา หนองแสง", "หอนาฬิกาเวียดนามอนุสรณ์",
+    "บ้านลุงโฮจิมินห์ (บ้านนาจอก)", "พิพิธภัณฑ์จวนผู้ว่าราชการจังหวัดนครพนม (หลังเก่า)",
+    "เส้นทางจักรยานริมแม่น้ำโขง (River Walk)", "อุทยานแห่งชาติภูลังกา", "วัดพระธาตุเรณู"
 ];
-const months = ["มกราคม", "กุมภาพันธ์", "มีนาคม", "เมษายน", "พฤษภาคม", "มิถุนายน", "กรกฎาคม", "สิงหาคม", "กันยายน", "ตุลาคม", "พฤศจิกายน", "ธันวาคม"];
-const styles = ["ลุยเดี่ยว", "กลุ่มเพื่อน", "ครอบครัว"];
 
-const reviewsGood = ["บรรยากาศดีมาก", "ประทับใจสุดๆ", "วิวสวยมาก", "ของกินอร่อย", "มานครพนมต้องมาที่นี่", "คนเยอะแต่สนุกดี", "สถานที่ศักดิ์สิทธิ์และเงียบสงบ", "เหมาะกับการมาพักผ่อน", "มุมถ่ายรูปเยอะมาก", "เดินทางสะดวก", "ประทับใจวิถีชุมชน"];
-const reviewsMed = ["พอใช้ได้", "คนเยอะไปหน่อย", "อากาศร้อนมาก", "หาที่จอดรถยาก", "ราคาอาหารแอบแพง", "ของขายซ้ำๆ กันเยอะ", "โอเคระดับนึง", "ไม่มีอะไรพิเศษ", "รอคิวนาน"];
-const reviewsBad = ["สกปรกไปนิด", "ห้องน้ำไม่พอ", "จัดระเบียบแย่มาก", "วุ่นวายสุดๆ", "ไม่ประทับใจเลย", "รถติดมาก", "ของแพงเกินจริง"];
+const months = ["มกราคม", "กุมภาพันธ์", "มีนาคม", "เมษายน", "พฤษภาคม", "มิถุนายน", "กรกฎาคม", "สิงหาคม", "กันยายน", "ตุลาคม", "พฤศจิกายน", "ธันวาคม"];
+const travelStyles = ["ลุยเดี่ยว", "กลุ่มเพื่อน", "ครอบครัว"];
+const years = [2022, 2023, 2024];
+
+function randomInt(min, max) { return Math.floor(Math.random() * (max - min + 1)) + min; }
+function randomFloat(min, max) { return (Math.random() * (max - min) + min).toFixed(1); }
+function randomChoice(arr) { return arr[Math.floor(Math.random() * arr.length)]; }
 
 const data = [];
+let id = 1;
 
-for (let i = 1; i <= 500; i++) {
-    const month = months[Math.floor(Math.random() * months.length)];
-    const isFestMonth = (month === "เมษายน" || month === "ตุลาคม" || month === "พฤศจิกายน" || month === "ธันวาคม");
-    const isFestival = isFestMonth ? (Math.random() > 0.4) : (Math.random() > 0.85);
-    
-    const travelStyle = styles[Math.floor(Math.random() * styles.length)];
-    const location = locations[Math.floor(Math.random() * locations.length)];
-    
-    let visitors = 1;
-    if (travelStyle === "ครอบครัว") visitors = Math.floor(Math.random() * 6) + 3;
-    else if (travelStyle === "กลุ่มเพื่อน") visitors = Math.floor(Math.random() * 5) + 2;
-    else visitors = 1;
+for (let i = 0; i < 1500; i++) {
+    const year = randomChoice(years);
+    const month = randomChoice(months);
+    const location = randomChoice(locations);
+    const style = randomChoice(travelStyles);
 
-    let cluster = "";
-    let satisfaction = 0;
-    let revenuePerHead = 0;
+    let isFestival = (month === "เมษายน" || month === "ตุลาคม" || month === "ธันวาคม");
+    if (Math.random() > 0.8) isFestival = !isFestival;
 
-    if (isFestival && Math.random() > 0.3) {
-        cluster = "Festival Spenders";
-        revenuePerHead = Math.floor(Math.random() * 2500) + 1500;
-        satisfaction = (Math.random() * 2.5) + 2.0;
-    } else if (travelStyle === "ครอบครัว") {
-        cluster = "Family Chill-Out";
-        revenuePerHead = Math.floor(Math.random() * 1500) + 800;
-        satisfaction = (Math.random() * 1.5) + 3.5;
-    } else {
-        cluster = "Solo Explorer";
-        revenuePerHead = Math.floor(Math.random() * 1000) + 400;
-        satisfaction = (Math.random() * 2.0) + 3.0;
-    }
+    let cluster = "Family Chill-Out";
+    if (style === "ลุยเดี่ยว") cluster = "Solo Explorer";
+    if (isFestival && Math.random() > 0.5) cluster = "Festival Spenders";
 
-    const totalRevenue = visitors * revenuePerHead;
-    
-    let review = "";
-    if (satisfaction >= 4.0) review = reviewsGood[Math.floor(Math.random() * reviewsGood.length)];
-    else if (satisfaction >= 3.0) review = reviewsMed[Math.floor(Math.random() * reviewsMed.length)];
-    else review = reviewsBad[Math.floor(Math.random() * reviewsBad.length)];
+    // Base metrics
+    let visitors = randomInt(50, 300);
+    let revenue = visitors * randomInt(500, 2000);
+    let satisfaction = parseFloat(randomFloat(3.0, 5.0));
+
+    // Year multiplier (Trend growth) - simulating a general tourism recovery/growth
+    let yearMult = 1.0;
+    if (year === 2023) yearMult = randomFloat(1.05, 1.15); // ~10% growth
+    if (year === 2024) yearMult = randomFloat(1.15, 1.30); // ~22% growth
+
+    visitors = Math.floor(visitors * yearMult);
+    revenue = Math.floor(revenue * yearMult);
+
+    // Adjustments based on cluster
+    if (cluster === "Festival Spenders") { visitors *= 1.5; revenue *= 1.8; satisfaction -= 0.5; }
+    if (cluster === "Family Chill-Out") { revenue *= 1.2; satisfaction += 0.2; }
+    if (cluster === "Solo Explorer") { visitors = Math.floor(visitors * 0.6); revenue = Math.floor(revenue * 0.5); }
+
+    satisfaction = Math.max(1.0, Math.min(5.0, satisfaction));
+
+    const reviews = [
+        "ประทับใจมาก แนะนำเลยครับ", "คนเยอะไปหน่อยแต่ก็สนุกดี", "บรรยากาศดี ถ่ายรูปสวย",
+        "การจัดการยังต้องปรับปรุงนิดหน่อย", "คุ้มค่ากับการมาเที่ยว", "ของกินอร่อย วิวสวยมาก",
+        "อากาศร้อนไปนิด แต่โดยรวมโอเค", "เหมาะกับการมาพักผ่อนจริงๆ"
+    ];
 
     data.push({
-        id: i,
+        id: id++,
+        year: year,
         month: month,
-        isFestival: isFestival,
-        travelStyle: travelStyle,
         location: location,
-        visitors: visitors,
-        revenue: totalRevenue,
-        satisfaction: parseFloat(satisfaction.toFixed(1)),
+        travelStyle: style,
+        isFestival: isFestival,
         cluster: cluster,
-        review: review
+        visitors: Math.floor(visitors),
+        revenue: Math.floor(revenue),
+        satisfaction: parseFloat(satisfaction.toFixed(1)),
+        review: randomChoice(reviews)
     });
 }
 
-fs.writeFileSync('data.json', JSON.stringify(data, null, 2), 'utf8');
-console.log('Regenerated data.json with 11 locations.');
+fs.writeFileSync('data.json', JSON.stringify(data, null, 2));
+console.log('Generated 1500 records spanning 3 years successfully!');

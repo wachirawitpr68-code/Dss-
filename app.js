@@ -90,7 +90,6 @@ const locationDictionary = {
 
 window.mapMarkers = {}; 
 
-// Set Chart.js Defaults for Professional Typography
 Chart.defaults.font.family = "'Prompt', sans-serif";
 Chart.defaults.color = colors.muted;
 Chart.defaults.scale.grid.color = colors.border;
@@ -150,20 +149,28 @@ function initMap() {
 document.getElementById('filterFestival').addEventListener('change', updateDashboard);
 document.getElementById('filterStyle').addEventListener('change', updateDashboard);
 document.getElementById('filterScore').addEventListener('change', updateDashboard);
+document.getElementById('filterYear').addEventListener('change', updateDashboard);
+document.getElementById('filterLocation').addEventListener('change', updateDashboard);
 
 function updateDashboard() {
     const festivalFilter = document.getElementById('filterFestival').value;
     const styleFilter = document.getElementById('filterStyle').value;
     const scoreFilter = document.getElementById('filterScore').value;
+    const yearFilter = document.getElementById('filterYear').value;
+    const locationFilter = document.getElementById('filterLocation').value;
 
     let filteredData = rawData.filter(row => {
+        let passYear = yearFilter === 'all' ? true : row.year.toString() === yearFilter;
+        let passLoc = locationFilter === 'all' ? true : row.location === locationFilter;
         let passFestival = festivalFilter === 'all' ? true : row.isFestival.toString() === festivalFilter;
         let passStyle = styleFilter === 'all' ? true : row.travelStyle === styleFilter;
         let passScore = true;
+        
         if (scoreFilter === 'high') passScore = row.satisfaction >= 4.0;
         else if (scoreFilter === 'med') passScore = row.satisfaction >= 3.0 && row.satisfaction < 4.0;
         else if (scoreFilter === 'low') passScore = row.satisfaction < 3.0;
-        return passFestival && passStyle && passScore;
+        
+        return passYear && passLoc && passFestival && passStyle && passScore;
     });
 
     const countActiveEl = document.getElementById('recordCountActive');
@@ -195,13 +202,91 @@ function updateDashboard() {
 
     updateKPIs(filteredData);
     generateDashboardInsight(filteredData, locationStats);
+    calculatePredictiveAI(filteredData);
     drawVisitorChart(filteredData);
     drawRevenueChart(filteredData);
-    // Removed drawClusterChart(filteredData) to prevent JS crash since it was removed from HTML
     
     updateMap(locationStats, totalMapVisitors);
     renderAttractions(locationStats);
     renderDataMining(filteredData);
+}
+
+// ==========================================
+// PREDICTIVE AI LOGIC (Linear Regression)
+// ==========================================
+function calculatePredictiveAI(data) {
+    const el = document.getElementById('aiPredictionResult');
+    if (!el) return;
+
+    // Group visitors by year
+    const yearlyData = {};
+    data.forEach(r => {
+        if(!yearlyData[r.year]) yearlyData[r.year] = 0;
+        yearlyData[r.year] += r.visitors;
+    });
+
+    const years = Object.keys(yearlyData).sort();
+    
+    if (years.length < 2) {
+        el.innerHTML = `
+            <div class="text-white opacity-80 text-sm">
+                <p>⚠️ ต้องการข้อมูลย้อนหลังอย่างน้อย 2 ปีเพื่อพยากรณ์แนวโน้ม กรุณาเลือกตัวกรอง <strong>"ทุกปี"</strong></p>
+            </div>
+        `;
+        return;
+    }
+
+    // Linear Regression (y = mx + b)
+    let sumX = 0, sumY = 0, sumXY = 0, sumX2 = 0;
+    let n = years.length;
+    
+    years.forEach((yr, i) => {
+        let x = i;
+        let y = yearlyData[yr];
+        sumX += x;
+        sumY += y;
+        sumXY += x * y;
+        sumX2 += x * x;
+    });
+
+    let m = (n * sumXY - sumX * sumY) / (n * sumX2 - sumX * sumX); // slope
+    let b = (sumY - m * sumX) / n; // intercept
+    
+    let nextX = n; 
+    let nextYear = parseInt(years[years.length-1]) + 1;
+    let predictedY = Math.max(0, m * nextX + b);
+    let currentY = yearlyData[years[years.length-1]];
+
+    let growthPercent = currentY > 0 ? ((predictedY - currentY) / currentY) * 100 : 0;
+    
+    let arrow = ""; let trendColor = ""; let bgLight = "";
+    if (m > 0 && growthPercent > 1) {
+        arrow = "↑"; 
+        trendColor = "text-green-400";
+        bgLight = "bg-green-500/20";
+        trendText = "แนวโน้มเติบโต";
+    } else if (m < 0 && growthPercent < -1) {
+        arrow = "↓"; 
+        trendColor = "text-red-400";
+        bgLight = "bg-red-500/20";
+        trendText = "แนวโน้มหดตัว";
+    } else {
+        arrow = "→"; 
+        trendColor = "text-blue-300";
+        bgLight = "bg-blue-500/20";
+        trendText = "แนวโน้มคงที่";
+    }
+
+    el.innerHTML = `
+        <div class="mb-3">
+            <span class="text-sm font-semibold opacity-90 text-white">คาดการณ์ผู้เข้าชมปี ${nextYear}</span>
+            <div class="text-3xl font-bold text-white tracking-wide mt-1">${Math.round(predictedY).toLocaleString()} <span class="text-base font-normal opacity-80">คน</span></div>
+        </div>
+        <div class="inline-flex items-center justify-center gap-2 ${bgLight} rounded-full py-1.5 px-4 mx-auto border border-white/10">
+            <span class="font-bold text-lg ${trendColor}">${arrow}</span>
+            <span class="text-sm font-medium text-white">${trendText} <span class="${trendColor} ml-1">${Math.abs(growthPercent).toFixed(1)}%</span></span>
+        </div>
+    `;
 }
 
 // ==========================================
@@ -372,13 +457,16 @@ function openAttractionDetail(locName) {
     const meta = locationDictionary[locName];
     if (!meta) return;
 
+    // Use current global filters to render detail
     const festivalFilter = document.getElementById('filterFestival').value;
     const styleFilter = document.getElementById('filterStyle').value;
     const scoreFilter = document.getElementById('filterScore').value;
+    const yearFilter = document.getElementById('filterYear').value;
     
     let stat = { vis: 0, rev: 0, sumSat: 0, count: 0 };
     rawData.forEach(row => {
         if (row.location === locName) {
+            let passYear = yearFilter === 'all' ? true : row.year.toString() === yearFilter;
             let passFestival = festivalFilter === 'all' ? true : row.isFestival.toString() === festivalFilter;
             let passStyle = styleFilter === 'all' ? true : row.travelStyle === styleFilter;
             let passScore = true;
@@ -386,7 +474,7 @@ function openAttractionDetail(locName) {
             else if (scoreFilter === 'med') passScore = row.satisfaction >= 3.0 && row.satisfaction < 4.0;
             else if (scoreFilter === 'low') passScore = row.satisfaction < 3.0;
             
-            if (passFestival && passStyle && passScore) {
+            if (passYear && passFestival && passStyle && passScore) {
                 stat.vis += row.visitors;
                 stat.rev += row.revenue;
                 stat.sumSat += row.satisfaction;
@@ -554,11 +642,10 @@ function renderDataMining(data) {
 function drawDssScatterChart(data) {
     const ctx = document.getElementById('dssScatterChart').getContext('2d');
     
-    // Professional colors for clusters
     const clusterColors = {
-        "Family Chill-Out": "rgba(42, 157, 143, 0.7)", // Secondary
-        "Solo Explorer": "rgba(233, 196, 106, 0.7)",  // Accent
-        "Festival Spenders": "rgba(15, 76, 92, 0.7)"  // Primary
+        "Family Chill-Out": "rgba(42, 157, 143, 0.7)", 
+        "Solo Explorer": "rgba(233, 196, 106, 0.7)",  
+        "Festival Spenders": "rgba(15, 76, 92, 0.7)"  
     };
 
     const datasets = [];
@@ -653,40 +740,57 @@ function updateKPIs(data) {
 function drawVisitorChart(data) {
     const ctx = document.getElementById('visitorChart').getContext('2d');
     const monthsOrder = ["มกราคม", "กุมภาพันธ์", "มีนาคม", "เมษายน", "พฤษภาคม", "มิถุนายน", "กรกฎาคม", "สิงหาคม", "กันยายน", "ตุลาคม", "พฤศจิกายน", "ธันวาคม"];
-    const visitorsByMonth = {};
-    monthsOrder.forEach(m => visitorsByMonth[m] = 0);
-    data.forEach(row => { if(visitorsByMonth[row.month] !== undefined) visitorsByMonth[row.month] += row.visitors; });
     
-    const labels = monthsOrder;
-    const values = labels.map(m => visitorsByMonth[m]);
+    // Group by Year to draw multi-line chart
+    const yearsPresent = [...new Set(data.map(d => d.year))].sort();
+    const datasets = [];
     
+    const yearThemeColors = {
+        2024: colors.primary,      // Deep Teal
+        2023: colors.secondary,    // Green
+        2022: colors.accent        // Gold
+    };
+
+    yearsPresent.forEach(yr => {
+        const visitorsByMonth = {};
+        monthsOrder.forEach(m => visitorsByMonth[m] = 0);
+        
+        data.filter(d => d.year === yr).forEach(row => { 
+            visitorsByMonth[row.month] += row.visitors; 
+        });
+        
+        // If single year is selected, fill background. If multiple, lines only to prevent mess.
+        const isSingleYear = yearsPresent.length === 1;
+        const color = yearThemeColors[yr] || colors.muted;
+
+        datasets.push({
+            label: `ปี ${yr}`,
+            data: monthsOrder.map(m => visitorsByMonth[m]),
+            borderColor: color,
+            backgroundColor: isSingleYear ? color.replace('rgb', 'rgba').replace(')', ', 0.1)') : 'transparent',
+            borderWidth: 2,
+            tension: 0.3,
+            fill: isSingleYear,
+            pointBackgroundColor: colors.surface,
+            pointBorderColor: color,
+            pointBorderWidth: 2,
+            pointRadius: 4
+        });
+    });
+
     if (visitorChartInstance) visitorChartInstance.destroy();
     visitorChartInstance = new Chart(ctx, {
         type: 'line',
-        data: { 
-            labels: labels, 
-            datasets: [{ 
-                label: 'จำนวนนักท่องเที่ยว (คน)', 
-                data: values, 
-                backgroundColor: 'rgba(42, 157, 143, 0.1)', 
-                borderColor: colors.secondary, 
-                borderWidth: 2, 
-                fill: true, 
-                tension: 0.3, 
-                pointBackgroundColor: colors.surface, 
-                pointBorderColor: colors.secondary,
-                pointBorderWidth: 2,
-                pointRadius: 4 
-            }] 
-        },
-        options: { 
-            responsive: true, 
+        data: { labels: monthsOrder, datasets: datasets },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
             scales: { 
                 y: { beginAtZero: true, grid: { borderDash: [5, 5] } },
                 x: { grid: { display: false } }
             },
             plugins: {
-                legend: { display: false },
+                legend: { display: true, position: 'top', align: 'end' },
                 tooltip: { backgroundColor: 'rgba(31, 41, 55, 0.9)' }
             }
         }
@@ -698,7 +802,6 @@ function drawRevenueChart(data) {
     const revenueByLocation = {};
     data.forEach(row => { revenueByLocation[row.location] = (revenueByLocation[row.location] || 0) + row.revenue; });
     
-    // Sort logic to make chart cleaner
     const sortedEntries = Object.entries(revenueByLocation).sort((a, b) => b[1] - a[1]);
     const labels = sortedEntries.map(e => e[0]);
     const values = sortedEntries.map(e => e[1]);
@@ -731,34 +834,6 @@ function drawRevenueChart(data) {
                 tooltip: { backgroundColor: 'rgba(31, 41, 55, 0.9)' }
             }
         }
-    });
-}
-
-function renderReviews(data) {
-    // Note: Reviews section was not present in the new dashboard design outline, 
-    // but preserving the function to maintain logic contract. If it's not in HTML, it fails silently.
-    const container = document.getElementById('reviewContainer');
-    if(!container) return;
-    
-    container.innerHTML = '';
-    const top5 = data.slice(0, 5);
-    if(top5.length === 0) {
-        container.innerHTML = '<p class="text-sm text-brand-muted italic p-4 bg-brand-bg rounded">ไม่พบข้อมูลการประเมิน</p>';
-        return;
-    }
-    top5.forEach(row => {
-        const div = document.createElement('div');
-        div.className = `p-4 bg-brand-surface rounded border border-brand-border flex justify-between items-start gap-4`;
-        div.innerHTML = `
-            <div>
-                <p class="text-sm font-semibold text-brand-text">${row.location} <span class="text-xs text-brand-muted font-normal ml-2">${row.travelStyle} | ${row.month}</span></p>
-                <p class="text-sm text-brand-muted mt-1">"${row.review}"</p>
-            </div>
-            <div class="text-right whitespace-nowrap bg-brand-bg px-2 py-1 rounded text-xs font-semibold text-brand-text">
-                ⭐ ${row.satisfaction.toFixed(1)}
-            </div>
-        `;
-        container.appendChild(div);
     });
 }
 
