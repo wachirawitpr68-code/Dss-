@@ -765,6 +765,13 @@ function drawVisitorChart(data) {
         2022: colors.twilight     // Purple for oldest
     };
 
+    const hexToRgba = (hex, alpha) => {
+        let r = parseInt(hex.slice(1, 3), 16);
+        let g = parseInt(hex.slice(3, 5), 16);
+        let b = parseInt(hex.slice(5, 7), 16);
+        return `rgba(${r}, ${g}, ${b}, ${alpha})`;
+    };
+
     yearsPresent.forEach(yr => {
         const visitorsByMonth = {};
         monthsOrder.forEach(m => visitorsByMonth[m] = 0);
@@ -776,11 +783,19 @@ function drawVisitorChart(data) {
         const isSingleYear = yearsPresent.length === 1;
         const color = yearThemeColors[yr] || colors.muted;
 
+        let bgColor = 'transparent';
+        if (isSingleYear) {
+            let gradient = ctx.createLinearGradient(0, 0, 0, 350);
+            gradient.addColorStop(0, hexToRgba(color, 0.4));
+            gradient.addColorStop(1, hexToRgba(color, 0.0));
+            bgColor = gradient;
+        }
+
         datasets.push({
             label: `ปี ${yr}`,
             data: monthsOrder.map(m => visitorsByMonth[m]),
             borderColor: color,
-            backgroundColor: isSingleYear ? color.replace('rgb', 'rgba').replace(')', ', 0.15)') : 'transparent',
+            backgroundColor: bgColor,
             borderWidth: 2.5,
             tension: 0.4, 
             fill: isSingleYear,
