@@ -1042,19 +1042,38 @@ function drawWheel() {
     });
 
     const labelEl = document.getElementById('works-label');
-    const titleEl = document.getElementById('works-title');
+    const infoEl = document.getElementById('works-info');
     if (labelEl) labelEl.style.opacity = String(1 - m);
+    if (infoEl) infoEl.style.opacity = String(m);
     
     const nearIdx = Math.min(Math.max(Math.round(pos), 0), wheelLast);
-    
-    if (titleEl) {
-        titleEl.style.opacity = String(m);
-        const itemTitles = Object.keys(locationDictionary);
-        titleEl.innerText = itemTitles[nearIdx] || "";
-    }
 
     if (wheelActive !== nearIdx) {
         wheelActive = nearIdx;
+        
+        // Update Information Panel (Left Side)
+        const itemTitles = Object.keys(locationDictionary);
+        const locName = itemTitles[nearIdx];
+        const locData = locationDictionary[locName];
+        
+        if (locData) {
+            const titleEl = document.getElementById('works-title');
+            const descEl = document.getElementById('works-desc');
+            if (titleEl) titleEl.innerText = locName;
+            if (descEl) {
+                descEl.innerHTML = `
+                    <div class="flex items-center gap-2 mb-3">
+                        <span class="text-brand-orange text-lg">📍</span> 
+                        <span><b>อำเภอ:</b> ${locData.district}</span>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <span class="text-brand-primary text-lg">🏷️</span> 
+                        <span><b>หมวดหมู่:</b> ${locData.type}</span>
+                    </div>
+                `;
+            }
+        }
+
         const indexBtns = document.querySelectorAll('#works-index button');
         indexBtns.forEach((btn, idx) => {
             if(idx === wheelActive) {
