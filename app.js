@@ -57,12 +57,6 @@ const locationDictionary = {
         img: "https://images.unsplash.com/photo-1548625361-ec8590cb7c64?q=80&w=2000&auto=format&fit=crop",
         source: "Unsplash"
     },
-    "หอนาฬิกาเวียดนามอนุสรณ์": {
-        lat: 17.4055, lng: 104.7885,
-        type: "แลนด์มาร์กประวัติศาสตร์", district: "เมืองนครพนม",
-        img: "https://images.unsplash.com/photo-1552763327-0fb53bbceeb5?q=80&w=2000&auto=format&fit=crop",
-        source: "Unsplash"
-    },
     "บ้านลุงโฮจิมินห์ (บ้านนาจอก)": {
         lat: 17.3822, lng: 104.7538,
         type: "สถานที่ประวัติศาสตร์", district: "เมืองนครพนม",
